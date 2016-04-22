@@ -1,0 +1,8 @@
+[package]
+name = "graphplay2"
+version = "0.1.0"
+authors = ["Andrew Watts <ahwatts@gmail.com>"]
+
+[dependencies]
+glium = "^0.14.0"
+nalgebra = "^0.8.1"

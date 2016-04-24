@@ -25,6 +25,7 @@ fn main() {
     let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, unlit)));
     scene.add(octo_mesh.clone());
 
+    let pi = f32::pi();
     let (mut xrot, mut yrot) = (0.0, 0.0);
     let mut prev_time = Instant::now();
 
@@ -37,8 +38,8 @@ fn main() {
         let ftime = nanos as f32 / 1_000_000_000_f32;
 
         // Build the model transformation matrix.
-        yrot = (yrot + ftime * f32::pi() / 20.0) % (2.0 * f32::pi());
-        xrot = (xrot + ftime * f32::pi() / 60.0) % (2.0 * f32::pi());
+        yrot = (yrot + ftime * pi / 20.0) % (2.0 * pi);
+        xrot = (xrot + ftime * pi / 60.0) % (2.0 * pi);
         let yrot_m = Vector3::y() * yrot;
         let xrot_m = Vector3::x() * xrot;
         octo_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);

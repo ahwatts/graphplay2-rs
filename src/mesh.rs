@@ -25,19 +25,6 @@ impl<V: Vertex, I: Index> Mesh<V, I> {
             orientation: one(),
         }
     }
-
-    // pub fn render<'n, S, T, U>(&self, target: &mut S, uniforms: UniformsStorage<'n, T, U>, params: DrawParameters)
-    //     where S: Surface, T: AsUniformValue, U: Uniforms
-    // {
-    //     let model_transform = Similarity3::new_with_rotation_matrix(self.position.to_vector(), self.orientation, self.scale);
-    //     let model = model_transform.to_homogeneous();
-    //     let model_inv_trans_3: Matrix3<f32> = FromHomogeneous::from(&model);
-
-    //     let uniforms = uniforms.add("model", *model.as_ref());
-    //     let uniforms = uniforms.add("model_inv_trans_3", *model_inv_trans_3.as_ref());
-
-    //     self.geometry.render(target, &self.program, &uniforms, &params);
-    // }
 }
 
 impl<V: Vertex, I: Index> SceneObject for Mesh<V, I> {

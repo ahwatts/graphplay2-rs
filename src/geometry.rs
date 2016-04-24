@@ -1,9 +1,8 @@
 // #![allow(dead_code)]
 
 use glium::backend::Facade;
-use glium::index::{Index, PrimitiveType};
-use glium::uniforms::Uniforms;
-use glium::{DrawParameters, IndexBuffer, Program, Surface, Vertex, VertexBuffer};
+use glium::index::{Index, IndexBuffer, PrimitiveType};
+use glium::vertex::{Vertex, VertexBuffer};
 use nalgebra::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -18,9 +17,9 @@ impl PCNVertex {
         From::from(&self.position)
     }
 
-    pub fn normal_vec(&self) -> &Vector3<f32> {
-        From::from(&self.normal)
-    }
+    // pub fn normal_vec(&self) -> &Vector3<f32> {
+    //     From::from(&self.normal)
+    // }
 }
 
 implement_vertex!(PCNVertex, position, color, normal);
@@ -47,11 +46,19 @@ impl<V: Vertex, I: Index> Geometry<V, I> {
         }
     }
 
-    pub fn render<S: Surface, U: Uniforms>(&self, surface: &mut S, program: &Program, uniforms: &U, params: &DrawParameters) {
-        surface.draw(
-            &self.vertex_buffer, &self.index_buffer,
-            program, uniforms, params).unwrap();
+    pub fn vertex_buffer(&self) -> &VertexBuffer<V> {
+        &self.vertex_buffer
     }
+
+    pub fn index_buffer(&self) -> &IndexBuffer<I> {
+        &self.index_buffer
+    }
+
+    // pub fn render<S: Surface, U: Uniforms>(&self, surface: &mut S, program: &Program, uniforms: &U, params: &DrawParameters) {
+    //     surface.draw(
+    //         &self.vertex_buffer, &self.index_buffer,
+    //         program, uniforms, params).unwrap();
+    // }
 }
 
 static OCTOHEDRON_VERTICES: [PCNVertex; 6] = [

@@ -7,6 +7,8 @@ use glium::uniforms::{UniformBuffer};
 use glium::Surface;
 use nalgebra::*;
 use shaders::ViewAndProjectionBlock;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub trait SceneObject {
     fn vertices(&self) -> VerticesSource;
@@ -16,7 +18,7 @@ pub trait SceneObject {
 }
 
 pub struct Scene {
-    objects: Vec<Box<SceneObject>>,
+    objects: Vec<Rc<RefCell<SceneObject>>>,
     vp_buffer: UniformBuffer<ViewAndProjectionBlock>,
 }
 
@@ -43,8 +45,8 @@ impl Scene {
         }
     }
 
-    pub fn add<O: SceneObject + 'static>(&mut self, object: O) {
-        self.objects.push(Box::new(object));
+    pub fn add<O: SceneObject + 'static>(&mut self, object: Rc<RefCell<O>>) {
+        self.objects.push(object);
     }
 
     pub fn render<S: Surface>(&self, target: &mut S) {
@@ -57,7 +59,8 @@ impl Scene {
             ..Default::default()
         };
 
-        for object in self.objects.iter() {
+        for object_cell in self.objects.iter() {
+            let object = object_cell.borrow();
             let (model, model_inv_trans_3) = object.model_transform();
 
             let uniforms = uniform! {

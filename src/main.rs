@@ -11,6 +11,7 @@ mod shaders;
 use glium::{glutin, DisplayBuild, Surface};
 use mesh::Mesh;
 use scene::Scene;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 fn main() {
@@ -19,7 +20,7 @@ fn main() {
 
     let octo = Rc::new(geometry::octohedron(&display));
     let unlit = Rc::new(shaders::unlit(&display));
-    let octo_mesh = Mesh::new(octo, unlit);
+    let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, unlit)));
     scene.add(octo_mesh);
 
     loop {

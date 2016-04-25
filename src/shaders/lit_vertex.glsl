@@ -16,12 +16,12 @@ in vec4 color;
 
 uniform mat4x4 model;
 uniform mat3x3 model_inv_trans_3;
-layout (shared) uniform view_and_projection {
+layout (std140) uniform view_and_projection {
     mat4x4 view;
     mat4x4 view_inv;
     mat4x4 projection;
 };
-layout (shared) uniform light_list {
+layout (std140) uniform light_list {
     LightProperties lights[MAX_LIGHTS];
 };
 

@@ -10,8 +10,6 @@ use shaders::{LightListBlock, LightProperties, ViewAndProjectionBlock};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use glium::uniforms::UniformBlock;
-
 pub trait SceneObject {
     fn vertices(&self) -> VerticesSource;
     fn indices(&self) -> IndicesSource;
@@ -43,12 +41,7 @@ impl Scene {
         };
 
         let mut light_list_block: LightListBlock = Default::default();
-        light_list_block.lights[0] = LightProperties {
-            enabled: true,
-            position: [ 0.0, 10.0, 10.0 ],
-            color: [ 1.0, 1.0, 1.0, 1.0 ],
-            specular_exp: 10.0,
-        };
+        light_list_block.lights[0] = LightProperties::new(true, [ 0.0, 10.0, 10.0 ], [ 1.0, 1.0, 1.0, 1.0 ], 10.0);
 
         Scene {
             objects: Vec::new(),

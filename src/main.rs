@@ -18,11 +18,13 @@ use std::time::Instant;
 
 fn main() {
     let display = glutin::WindowBuilder::new().build_glium().unwrap();
+    // let unlit = Rc::new(shaders::unlit(&display));
+    let lit = Rc::new(shaders::lit(&display));
+
     let mut scene = Scene::new(&display);
 
     let octo = Rc::new(geometry::octohedron(&display));
-    let unlit = Rc::new(shaders::unlit(&display));
-    let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, unlit)));
+    let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
     scene.add(octo_mesh.clone());
 
     let pi = f32::pi();

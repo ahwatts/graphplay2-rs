@@ -6,9 +6,11 @@ use glium::program::Program;
 use glium::uniforms::{UniformBuffer};
 use glium::Surface;
 use nalgebra::*;
-use shaders::ViewAndProjectionBlock;
+use shaders::{LightListBlock, LightProperties, ViewAndProjectionBlock};
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use glium::uniforms::UniformBlock;
 
 pub trait SceneObject {
     fn vertices(&self) -> VerticesSource;
@@ -20,6 +22,7 @@ pub trait SceneObject {
 pub struct Scene {
     objects: Vec<Rc<RefCell<SceneObject>>>,
     vp_buffer: UniformBuffer<ViewAndProjectionBlock>,
+    light_buffer: UniformBuffer<LightListBlock>,
 }
 
 impl Scene {
@@ -39,9 +42,18 @@ impl Scene {
             projection: *projection.as_matrix().as_ref(),
         };
 
+        let mut light_list_block: LightListBlock = Default::default();
+        light_list_block.lights[0] = LightProperties {
+            enabled: true,
+            position: [ 0.0, 10.0, 10.0 ],
+            color: [ 1.0, 1.0, 1.0, 1.0 ],
+            specular_exp: 10.0,
+        };
+
         Scene {
             objects: Vec::new(),
             vp_buffer: UniformBuffer::new(display, vp_block).unwrap(),
+            light_buffer: UniformBuffer::new(display, light_list_block).unwrap(),
         }
     }
 
@@ -67,6 +79,7 @@ impl Scene {
                 model: *model.as_ref(),
                 model_inv_trans_3: *model_inv_trans_3.as_ref(),
                 view_and_projection: &self.vp_buffer,
+                light_list: &self.light_buffer,
             };
 
             target.draw(object.vertices(), object.indices(),

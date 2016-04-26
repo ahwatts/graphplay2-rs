@@ -15,7 +15,7 @@ in vec3 normal;
 in vec4 color;
 
 uniform mat4x4 model;
-uniform mat3x3 model_inv_trans_3;
+uniform mat3x3 model_normal;
 layout (std140) uniform view_and_projection {
     mat4x4 view;
     mat4x4 view_inv;
@@ -38,7 +38,7 @@ void main(void) {
     vec4 wld_eye_position4 = view_inv * vec4(0.0, 0.0, 0.0, 1.0);
     vec3 wld_eye_position = wld_eye_position4.xyz / wld_eye_position4.w;
 
-    vec3 wld_vert_normal = normalize(model_inv_trans_3 * normal);
+    vec3 wld_vert_normal = normalize(model_normal * normal);
 
     vec3 wld_vert_eye_dir = normalize(wld_eye_position - wld_vert_position);
 

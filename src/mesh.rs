@@ -4,6 +4,7 @@ use glium::program::Program;
 use glium::vertex::{IntoVerticesSource, Vertex, VerticesSource};
 use nalgebra::*;
 use scene::SceneObject;
+use shaders::ModelTransformation;
 use std::rc::Rc;
 
 pub struct Mesh<V: Vertex, I: Index> {
@@ -40,14 +41,21 @@ impl<V: Vertex, I: Index> SceneObject for Mesh<V, I> {
         &self.program
     }
 
-    fn model_transform(&self) -> (Matrix4<f32>, Matrix3<f32>) {
+    fn model_transform(&self) -> ModelTransformation {
         let transform = Similarity3::new_with_rotation_matrix(
             self.position.to_vector(),
             self.orientation,
             self.scale);
         let model = transform.to_homogeneous();
-        let model_inv_trans_3 = FromHomogeneous::from(&model);
 
-        (model, model_inv_trans_3)
+        // Since we're only doing uniform scaling, the normal matrix
+        // (the inverse transpose of the upper-left 3x3 of the model
+        // matrix) is equal to the upper-left 3x3 of the model matrix.
+        let model_normal = FromHomogeneous::from(&model);
+
+        ModelTransformation {
+            model: model,
+            model_normal: model_normal,
+        }
     }
 }

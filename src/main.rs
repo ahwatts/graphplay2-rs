@@ -18,7 +18,7 @@ use std::time::Instant;
 
 fn main() {
     let display = glutin::WindowBuilder::new().build_glium().unwrap();
-    // let unlit = Rc::new(shaders::unlit(&display));
+    let _unlit = Rc::new(shaders::unlit(&display));
     let lit = Rc::new(shaders::lit(&display));
 
     let mut scene = Scene::new(&display);

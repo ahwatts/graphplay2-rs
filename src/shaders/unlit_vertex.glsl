@@ -6,7 +6,7 @@ in vec3 position;
 in vec4 color;
 
 uniform mat4x4 model;
-uniform mat3x3 model_inv_trans_3;
+uniform mat3x3 model_normal;
 layout (shared) uniform view_and_projection {
     mat4x4 view;
     mat4x4 view_inv;

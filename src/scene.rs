@@ -6,7 +6,7 @@ use glium::program::Program;
 use glium::uniforms::{UniformBuffer};
 use glium::Surface;
 use nalgebra::*;
-use shaders::{LightListBlock, LightProperties, ViewAndProjectionBlock};
+use shaders::{LightListBlock, LightProperties, ModelTransformation, ViewAndProjectionBlock};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -14,7 +14,7 @@ pub trait SceneObject {
     fn vertices(&self) -> VerticesSource;
     fn indices(&self) -> IndicesSource;
     fn program(&self) -> &Program;
-    fn model_transform(&self) -> (Matrix4<f32>, Matrix3<f32>);
+    fn model_transform(&self) -> ModelTransformation;
 }
 
 pub struct Scene {
@@ -66,11 +66,11 @@ impl Scene {
 
         for object_cell in self.objects.iter() {
             let object = object_cell.borrow();
-            let (model, model_inv_trans_3) = object.model_transform();
+            let model_transform = object.model_transform();
 
             let uniforms = uniform! {
-                model: *model.as_ref(),
-                model_inv_trans_3: *model_inv_trans_3.as_ref(),
+                model: *model_transform.model.as_ref(),
+                model_normal: *model_transform.model_normal.as_ref(),
                 view_and_projection: &self.vp_buffer,
                 light_list: &self.light_buffer,
             };

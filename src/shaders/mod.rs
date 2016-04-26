@@ -1,5 +1,6 @@
 use glium::Program;
 use glium::backend::Facade;
+use nalgebra::*;
 
 pub fn unlit<F: Facade>(facade: &F) -> Program {
     Program::from_source(facade, UNLIT.vertex, UNLIT.fragment, None).unwrap()
@@ -81,3 +82,18 @@ pub struct LightListBlock {
 }
 
 implement_uniform_block!(LightListBlock, lights);
+
+#[derive(Clone, Copy, Debug)]
+pub struct ModelTransformation {
+    pub model: Matrix4<f32>,
+    pub model_normal: Matrix3<f32>,
+}
+
+impl Default for ModelTransformation {
+    fn default() -> ModelTransformation {
+        ModelTransformation {
+            model: one(),
+            model_normal: one(),
+        }
+    }
+}

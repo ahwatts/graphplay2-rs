@@ -1,5 +1,3 @@
-// #![allow(dead_code)]
-
 use glium::backend::Facade;
 use glium::index::{Index, IndexBuffer, PrimitiveType};
 use glium::vertex::{Vertex, VertexBuffer};
@@ -53,12 +51,6 @@ impl<V: Vertex, I: Index> Geometry<V, I> {
     pub fn index_buffer(&self) -> &IndexBuffer<I> {
         &self.index_buffer
     }
-
-    // pub fn render<S: Surface, U: Uniforms>(&self, surface: &mut S, program: &Program, uniforms: &U, params: &DrawParameters) {
-    //     surface.draw(
-    //         &self.vertex_buffer, &self.index_buffer,
-    //         program, uniforms, params).unwrap();
-    // }
 }
 
 static OCTOHEDRON_VERTICES: [PCNVertex; 6] = [

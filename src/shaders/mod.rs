@@ -60,12 +60,13 @@ impl Default for LightProperties {
     fn default() -> LightProperties {
         LightProperties {
             enabled:      false,
-            padding1:     [ 0, 0, 0 ],
             position:     [ 0.0, 0.0, 0.0 ],
-            padding2:     0,
             color:        [ 0.0, 0.0, 0.0, 1.0],
             specular_exp: 0.0,
-            padding3:     [ 0, 0, 0 ],
+
+            padding2:     Default::default(),
+            padding1:     Default::default(),
+            padding3:     Default::default(),
         }
     }
 }

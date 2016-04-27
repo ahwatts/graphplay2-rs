@@ -1,9 +1,10 @@
+use camera::Camera;
 use glium::backend::Facade;
 use glium::draw_parameters::{DrawParameters, Depth, DepthTest};
 use glium::vertex::VerticesSource;
 use glium::index::IndicesSource;
 use glium::program::Program;
-use glium::uniforms::{UniformBuffer};
+use glium::uniforms::UniformBuffer;
 use glium::Surface;
 use nalgebra::*;
 use shaders::{LightListBlock, LightProperties, ModelTransformation, ViewAndProjectionBlock};
@@ -19,16 +20,15 @@ pub trait SceneObject {
 
 pub struct Scene {
     objects: Vec<Rc<RefCell<SceneObject>>>,
+    // camera: Camera<f32>,
+
     vp_buffer: UniformBuffer<ViewAndProjectionBlock>,
     light_buffer: UniformBuffer<LightListBlock>,
 }
 
 impl Scene {
-    pub fn new<F: Facade>(display: &F) -> Scene {
-        let view = Isometry3::look_at_rh(
-            &Point3  { x: 0.0, y: 0.0, z: 5.0 },
-            &Point3  { x: 0.0, y: 0.0, z: 0.0 },
-            &Vector3 { x: 0.0, y: 1.0, z: 0.0 });
+    pub fn new<F: Facade>(display: &F, camera: Camera<f32>) -> Scene {
+        let view = camera.view_transform();
         let projection = PerspectiveMatrix3::new(
             4.0 / 3.0,
             f32::pi() / 6.0,
@@ -45,6 +45,8 @@ impl Scene {
 
         Scene {
             objects: Vec::new(),
+            // camera: camera,
+
             vp_buffer: UniformBuffer::new(display, vp_block).unwrap(),
             light_buffer: UniformBuffer::new(display, light_list_block).unwrap(),
         }

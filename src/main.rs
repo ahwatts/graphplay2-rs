@@ -3,11 +3,13 @@ extern crate nalgebra;
 #[macro_use]
 extern crate glium;
 
+mod camera;
 mod geometry;
 mod mesh;
 mod scene;
 mod shaders;
 
+use camera::Camera;
 use glium::{glutin, DisplayBuild, Surface};
 use mesh::Mesh;
 use nalgebra::*;
@@ -21,7 +23,11 @@ fn main() {
     let _unlit = Rc::new(shaders::unlit(&display));
     let lit = Rc::new(shaders::lit(&display));
 
-    let mut scene = Scene::new(&display);
+    let mut scene = Scene::new(
+        &display,
+        Camera::new(Point3  { x: 0.0, y: 0.0, z: 5.0 },
+                    Point3  { x: 0.0, y: 0.0, z: 0.0 },
+                    Vector3 { x: 0.0, y: 1.0, z: 0.0 }));
 
     let octo = Rc::new(geometry::octohedron(&display));
     let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));

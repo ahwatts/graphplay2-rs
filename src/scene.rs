@@ -5,7 +5,7 @@ use glium::vertex::VerticesSource;
 use glium::index::IndicesSource;
 use glium::program::Program;
 use glium::uniforms::UniformBuffer;
-use glium::Surface;
+use glium::{Rect, Surface};
 use nalgebra::*;
 use shaders::{LightListBlock, LightProperties, ModelTransformation, ViewAndProjectionBlock};
 use std::cell::RefCell;
@@ -21,16 +21,17 @@ pub trait SceneObject {
 pub struct Scene {
     objects: Vec<Rc<RefCell<SceneObject>>>,
     // camera: Camera<f32>,
+    viewport: Rect,
 
     vp_buffer: UniformBuffer<ViewAndProjectionBlock>,
     light_buffer: UniformBuffer<LightListBlock>,
 }
 
 impl Scene {
-    pub fn new<F: Facade>(display: &F, camera: Camera<f32>) -> Scene {
+    pub fn new<F: Facade>(display: &F, camera: Camera<f32>, width: u32, height: u32) -> Scene {
         let view = camera.view_transform();
         let projection = PerspectiveMatrix3::new(
-            4.0 / 3.0,
+            width as f32 / height as f32,
             f32::pi() / 6.0,
             0.1, 100.0);
 
@@ -46,6 +47,7 @@ impl Scene {
         Scene {
             objects: Vec::new(),
             // camera: camera,
+            viewport: Rect { left: 0, bottom: 0, width: width, height: height },
 
             vp_buffer: UniformBuffer::new(display, vp_block).unwrap(),
             light_buffer: UniformBuffer::new(display, light_list_block).unwrap(),
@@ -63,7 +65,8 @@ impl Scene {
                 test: DepthTest::IfLess,
                 .. Default::default()
             },
-            ..Default::default()
+            viewport: Some(self.viewport),
+            .. Default::default()
         };
 
         for object_cell in self.objects.iter() {

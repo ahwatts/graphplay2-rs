@@ -3,6 +3,9 @@ extern crate nalgebra;
 #[macro_use]
 extern crate glium;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod camera;
 mod geometry;
 mod mesh;
@@ -19,7 +22,17 @@ use std::rc::Rc;
 use std::time::Instant;
 
 fn main() {
-    let display = glutin::WindowBuilder::new().build_glium().unwrap();
+    let (width, height) = (1024, 768);
+
+    let display = glutin::WindowBuilder::new()
+        .with_dimensions(width, height)
+        .with_depth_buffer(32)
+        .build_glium()
+        .unwrap();
+
+    let (window_width, window_height) = display.get_window().unwrap()
+        .get_inner_size_pixels().unwrap();
+
     let _unlit = Rc::new(shaders::unlit(&display));
     let lit = Rc::new(shaders::lit(&display));
 
@@ -27,7 +40,8 @@ fn main() {
         &display,
         Camera::new(Point3  { x: 0.0, y: 0.0, z: 5.0 },
                     Point3  { x: 0.0, y: 0.0, z: 0.0 },
-                    Vector3 { x: 0.0, y: 1.0, z: 0.0 }));
+                    Vector3 { x: 0.0, y: 1.0, z: 0.0 }),
+        window_width, window_height);
 
     let octo = Rc::new(geometry::octohedron(&display));
     let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
@@ -45,7 +59,7 @@ fn main() {
         let nanos = elapsed.subsec_nanos(); // Assume that the frame took < 1s.
         let ftime = nanos as f32 / 1_000_000_000_f32;
 
-        // Build the model transformation matrix.
+        // Update things.
         yrot = (yrot + ftime * pi / 20.0) % (2.0 * pi);
         xrot = (xrot + ftime * pi / 60.0) % (2.0 * pi);
         let yrot_m = Vector3::y() * yrot;
@@ -62,7 +76,7 @@ fn main() {
         for event in display.poll_events() {
             match event {
                 glutin::Event::Closed => return,
-                glutin::Event::KeyboardInput(glutin::ElementState::Released, _, Some(glutin::VirtualKeyCode::Escape)) => return,
+                glutin::Event::KeyboardInput(glutin::ElementState::Pressed, _, Some(glutin::VirtualKeyCode::Escape)) => return,
                 _ => {},
             }
         }

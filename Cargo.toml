@@ -5,4 +5,5 @@ authors = ["Andrew Watts <ahwatts@gmail.com>"]
 
 [dependencies]
 glium = "^0.14.0"
+lazy_static = "^0.2.1"
 nalgebra = "^0.8.1"

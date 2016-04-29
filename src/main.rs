@@ -17,6 +17,7 @@ use glium::{glutin, DisplayBuild, Surface};
 use mesh::Mesh;
 use nalgebra::*;
 use scene::Scene;
+use shaders::LightProperties;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
@@ -43,9 +44,11 @@ fn main() {
                     Vector3 { x: 0.0, y: 1.0, z: 0.0 }),
         window_width, window_height);
 
+    scene.set_light(0, LightProperties::new(true, [ 0.0, 10.0, 10.0 ], [ 1.0, 1.0, 1.0, 1.0 ], 10.0));
+
     let octo = Rc::new(geometry::octohedron(&display));
     let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
-    scene.add(octo_mesh.clone());
+    scene.add_object(octo_mesh.clone());
 
     let pi = f32::pi();
     let (mut xrot, mut yrot) = (0.0, 0.0);

@@ -41,7 +41,6 @@ impl Scene {
             projection: *projection.as_matrix().as_ref(),
         };
 
-
         Scene {
             objects: Vec::new(),
             camera: camera,
@@ -73,7 +72,7 @@ impl Scene {
         mapped_vp.projection = *projection.as_matrix().as_ref();
     }
 
-    pub fn update_view(&mut self) {
+    fn update_view(&mut self) {
         let view = self.camera.view_transform();
         let mut mapped_vp = self.vp_buffer.map();
         mapped_vp.view = *view.to_homogeneous().as_ref();

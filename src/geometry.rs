@@ -1,9 +1,11 @@
 use glium::backend::Facade;
 use glium::index::{Index, IndexBuffer, PrimitiveType};
 use glium::vertex::{Vertex, VertexBuffer};
+use ply::Document;
 use nalgebra::*;
+use std::iter;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct PCNVertex {
     pub position: [f32; 3],
     pub color:    [f32; 4],
@@ -106,6 +108,69 @@ pub fn octohedron<F: Facade>(facade: &F) -> Geometry<PCNVertex, u16> {
         elems.push(find_or_add_vert(&mut verts, new_v1) as u16);
         elems.push(find_or_add_vert(&mut verts, new_v2) as u16);
         elems.push(find_or_add_vert(&mut verts, new_v3) as u16);
+    }
+
+    Geometry::new(facade, PrimitiveType::TrianglesList, verts, elems)
+}
+
+pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u32> {
+    let doc = Document::from_file(filename).unwrap();
+
+    // Copy the vertex attributes.
+    let vert_elem = doc.elements().iter().find(|e| e.name() == "vertex").unwrap();
+    let mut verts: Vec<PCNVertex> = iter::repeat(Default::default()).take(vert_elem.count() as usize).collect();
+    for p in vert_elem.properties() {
+        match p.name() {
+            "x" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.position[0] = *p as f32 },
+            "y" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.position[1] = *p as f32 },
+            "z" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.position[2] = *p as f32 },
+            "nx" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.normal[0] = *p as f32 },
+            "ny" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.normal[1] = *p as f32 },
+            "nz" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.normal[2] = *p as f32 },
+            "red"   => for (v, p) in verts.iter_mut().zip(p.data().int_scalar().unwrap().iter()) { v.color[0] = *p as f32 },
+            "green" => for (v, p) in verts.iter_mut().zip(p.data().int_scalar().unwrap().iter()) { v.color[1] = *p as f32 },
+            "blue"  => for (v, p) in verts.iter_mut().zip(p.data().int_scalar().unwrap().iter()) { v.color[2] = *p as f32 },
+            "alpha" => for (v, p) in verts.iter_mut().zip(p.data().int_scalar().unwrap().iter()) { v.color[3] = *p as f32 },
+            _ => {},
+        }
+    }
+
+    // Copy the vertex elements.
+    let faces = doc.elements().iter().find(|e| e.name() == "face").unwrap();
+    let mut elems = vec![];
+    for i in 0..(faces.count() as usize) {
+        let p = faces.properties().iter().find(|p| p.name() == "vertex_indices").unwrap();
+        elems.extend(p.data().int_list().unwrap()[i].iter().map(|j| *j as u32));
+    }
+
+    // Postprocessing. Calculate the bounding box.
+    let mut bb_min = verts[0].position_vec().clone();
+    let mut bb_max = bb_min.clone();
+    for v in verts.iter() {
+        let pos = v.position_vec();
+        if pos.x < bb_min.x { bb_min.x = pos.x }
+        if pos.y < bb_min.y { bb_min.y = pos.y }
+        if pos.z < bb_min.z { bb_min.z = pos.z }
+        if pos.x > bb_max.x { bb_max.x = pos.x }
+        if pos.y > bb_max.y { bb_max.y = pos.y }
+        if pos.z > bb_max.z { bb_max.z = pos.z }
+    }
+
+    // Scale everything so that it's in the range -1 to 1 and centered.
+    let bcenter = (bb_max + bb_min) / 2.0;
+    let new_bb_max = bb_max - bcenter;
+    let max_dim = (new_bb_max.as_ref() as &[f32; 3]).iter().fold(new_bb_max.x, |m, &v| m.max(v));
+    for v in verts.iter_mut() {
+        let new_pos = (v.position_vec().clone() - bcenter) / max_dim;
+        v.position = *new_pos.as_ref();
+    }
+
+    // Set the colors, assuming all vertices are opaque.
+    for v in verts.iter_mut() {
+        v.color[0] = (v.color[0] / v.color[3]) * v.position[0].abs();
+        v.color[1] = (v.color[1] / v.color[3]) * v.position[1].abs();
+        v.color[2] = (v.color[2] / v.color[3]) * v.position[2].abs();
+        v.color[3] = 1.0;
     }
 
     Geometry::new(facade, PrimitiveType::TrianglesList, verts, elems)

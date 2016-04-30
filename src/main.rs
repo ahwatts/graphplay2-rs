@@ -6,11 +6,12 @@ extern crate glium;
 #[macro_use]
 extern crate lazy_static;
 
-mod camera;
-mod geometry;
-mod mesh;
-mod scene;
-mod shaders;
+pub mod camera;
+pub mod geometry;
+pub mod mesh;
+pub mod ply;
+pub mod scene;
+pub mod shaders;
 
 use camera::Camera;
 use glium::{glutin, DisplayBuild, Surface};
@@ -27,7 +28,7 @@ fn main() {
 
     let display = glutin::WindowBuilder::new()
         .with_dimensions(width, height)
-        .with_depth_buffer(32)
+        .with_depth_buffer(24)
         .build_glium()
         .unwrap();
 
@@ -46,9 +47,13 @@ fn main() {
 
     scene.set_light(0, LightProperties::new(true, [ 0.0, 10.0, 10.0 ], [ 1.0, 1.0, 1.0, 1.0 ], 10.0));
 
-    let octo = Rc::new(geometry::octohedron(&display));
-    let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
-    scene.add_object(octo_mesh.clone());
+    // let octo = Rc::new(geometry::octohedron(&display));
+    // let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
+    // scene.add_object(octo_mesh.clone());
+
+    let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_bunny.ply"));
+    let bunny_mesh = Rc::new(RefCell::new(Mesh::new(bunny, lit)));
+    scene.add_object(bunny_mesh.clone());
 
     let pi = f32::pi();
     let (mut xrot, mut yrot) = (0.0, 0.0);
@@ -67,7 +72,8 @@ fn main() {
         xrot = (xrot + ftime * pi / 60.0) % (2.0 * pi);
         let yrot_m = Vector3::y() * yrot;
         let xrot_m = Vector3::x() * xrot;
-        octo_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
+        // octo_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
+        bunny_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
 
         // Render.
         let mut target = display.draw();

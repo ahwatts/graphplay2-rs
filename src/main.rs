@@ -1,3 +1,4 @@
+extern crate byteorder;
 extern crate nalgebra;
 
 #[macro_use]
@@ -48,7 +49,7 @@ fn main() {
     // let octo_mesh = Rc::new(RefCell::new(Mesh::new(octo, lit)));
     // scene.add_object(octo_mesh.clone());
 
-    let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_bunny.ply"));
+    let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_armadillo.ply"));
     let bunny_mesh = Rc::new(RefCell::new(Mesh::new(bunny, lit)));
     scene.add_object(bunny_mesh.clone());
 

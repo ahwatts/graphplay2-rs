@@ -1,7 +1,7 @@
+use byteorder::{ByteOrder, BigEndian, LittleEndian, ReadBytesExt};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::io;
-use std::iter;
 use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -93,6 +93,41 @@ impl DataType {
             DataType::Float32 => Ok(unsafe { *(bytes.as_ptr() as *const f32) } as f64),
             DataType::Float64 => Ok(unsafe { *(bytes.as_ptr() as *const f64) } as f64),
             _ => Err(format!("Cannot decode float for int: self = {:?}, bytes = {:?}", self, bytes)),
+        }
+    }
+
+    pub fn read_int<R: ReadBytesExt>(&self, reader: &mut R, format: &Format) -> io::Result<i64> {
+        use self::DataType::*;
+        use self::Format::*;
+
+        match (*self, *format) {
+            (Int8, _) => reader.read_i8().map(|i| i as i64),
+            (Uint8, _) => reader.read_u8().map(|i| i as i64),
+
+            (Int16,  BinaryLittleEndian) => reader.read_i16::<LittleEndian>().map(|i| i as i64),
+            (Int16,  BinaryBigEndian)    => reader.read_i16::<BigEndian>()   .map(|i| i as i64),
+            (Uint16, BinaryLittleEndian) => reader.read_u16::<LittleEndian>().map(|i| i as i64),
+            (Uint16, BinaryBigEndian)    => reader.read_u16::<BigEndian>()   .map(|i| i as i64),
+
+            (Int32,  BinaryLittleEndian) => reader.read_i32::<LittleEndian>().map(|i| i as i64),
+            (Int32,  BinaryBigEndian)    => reader.read_i32::<BigEndian>()   .map(|i| i as i64),
+            (Uint32, BinaryLittleEndian) => reader.read_u32::<LittleEndian>().map(|i| i as i64),
+            (Uint32, BinaryBigEndian)    => reader.read_u32::<BigEndian>()   .map(|i| i as i64),
+                
+            _ => Err(io::Error::new(io::ErrorKind::Other, format!("Cannot decode int for float: self = {:?}", self))),
+        }
+    }
+
+    pub fn read_float<R: ReadBytesExt>(&self, reader: &mut R, format: &Format) -> io::Result<f64> {
+        use self::DataType::*;
+        use self::Format::*;
+
+        match (*self, *format) {
+            (Float32, BinaryLittleEndian) => reader.read_f32::<LittleEndian>().map(|i| i as f64),
+            (Float32, BinaryBigEndian)    => reader.read_f32::<BigEndian>()   .map(|i| i as f64),
+            (Float64, BinaryLittleEndian) => reader.read_f64::<LittleEndian>(),
+            (Float64, BinaryBigEndian)    => reader.read_f64::<BigEndian>(),
+            _ => Err(io::Error::new(io::ErrorKind::Other, format!("Cannot decode float for int: self = {:?}", self))),
         }
     }
 }
@@ -456,32 +491,55 @@ fn read_ascii_element<T: BufRead>(element: &mut Element, file: &mut T) -> io::Re
 }
 
 fn read_binary_element<T: BufRead>(element: &mut Element, format: Format, file: &mut T) -> io::Result<()> {
+    use self::PropertyValue::*;
+
     for _ in 0..element.count {
         for property in element.properties.iter_mut() {
             if property.is_list() {
                 let count_type = property.count_type().unwrap();
-                let mut count_bytes: Vec<u8> = iter::repeat(0).take(count_type.byte_size() as usize).collect();
-                try!(file.read(&mut count_bytes));
-                correct_endian(&mut count_bytes, format);
-                let count = try!(count_type.decode_int(&count_bytes).map_err(|s| other_io_error(&s))) as usize;
+                let count = try!(count_type.read_int(file, &format));
 
                 let value_type = property.value_type();
-                let mut values_bytes: Vec<Vec<u8>> = vec![];
+                let mut values = if value_type.is_int() {
+                    IntScalar(Vec::new())
+                } else {
+                    FloatScalar(Vec::new())
+                };
+
                 for _ in 0..count {
-                    let mut value_bytes: Vec<u8> = iter::repeat(0).take(value_type.byte_size() as usize).collect();
-                    try!(file.read(&mut value_bytes));
-                    correct_endian(&mut value_bytes, format);
-                    values_bytes.push(value_bytes);
+                    match values {
+                        IntScalar(ref mut ivec) => {
+                            let ival = try!(value_type.read_int(file, &format));
+                            ivec.push(ival);
+                        },
+                        FloatScalar(ref mut fvec) => {
+                            let fval = try!(value_type.read_float(file, &format));
+                            fvec.push(fval);
+                        },
+                        _ => return Err(other_io_error("Error parsing list value")),
+                    }
                 }
 
-                let values_bytes_refs = values_bytes.iter().map(|v| v as &[u8]).collect::<Vec<&[u8]>>();
-                try!(property.data.push_binary_list_value(&values_bytes_refs, value_type).map_err(|s| other_io_error(&s)));
+                match (&mut property.data, values) {
+                    (&mut IntList(ref mut ilists), IntScalar(ref ivals)) => ilists.push(ivals.clone()),
+                    (&mut FloatList(ref mut flists), FloatScalar(ref fvals)) => flists.push(fvals.clone()),
+                    _ => return Err(other_io_error("Error parsing list value")),
+                }
             } else {
                 let value_type = property.value_type();
-                let mut value_bytes: Vec<u8> = iter::repeat(0).take(value_type.byte_size() as usize).collect();
-                try!(file.read(&mut value_bytes));
-                correct_endian(&mut value_bytes, format);
-                try!(property.data.push_binary_scalar_value(&value_bytes, value_type).map_err(|s| other_io_error(&s)));
+                if value_type.is_int() {
+                    let value = try!(value_type.read_int(file, &format));
+                    match &mut property.data {
+                        &mut IntScalar(ref mut ivals) => ivals.push(value),
+                        _ => return Err(other_io_error("Error parsing scalar value")),
+                    }
+                } else {
+                    let value = try!(value_type.read_float(file, &format));
+                    match &mut property.data {
+                        &mut FloatScalar(ref mut fvals) => fvals.push(value),
+                        _ => return Err(other_io_error("Error parsing float value")),
+                    }
+                }
             }
         }
     }
@@ -489,11 +547,11 @@ fn read_binary_element<T: BufRead>(element: &mut Element, format: Format, file: 
     Ok(())
 }
 
-fn correct_endian(bytes: &mut [u8], format: Format) {
-    if (cfg!(target_endian = "big") && format == Format::BinaryLittleEndian) || (cfg!(target_endian = "little") && format == Format::BinaryBigEndian) {
-        bytes.reverse();
-    }
-}
+// fn correct_endian(bytes: &mut [u8], format: Format) {
+//     if (cfg!(target_endian = "big") && format == Format::BinaryLittleEndian) || (cfg!(target_endian = "little") && format == Format::BinaryBigEndian) {
+//         bytes.reverse();
+//     }
+// }
 
 fn other_io_error(msg: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Other, msg)

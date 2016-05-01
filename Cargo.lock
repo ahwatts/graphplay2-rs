@@ -2,6 +2,7 @@
 name = "graphplay2"
 version = "0.1.0"
 dependencies = [
+ "byteorder 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

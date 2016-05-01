@@ -3,9 +3,6 @@ extern crate nalgebra;
 #[macro_use]
 extern crate glium;
 
-#[macro_use]
-extern crate lazy_static;
-
 pub mod camera;
 pub mod geometry;
 pub mod mesh;

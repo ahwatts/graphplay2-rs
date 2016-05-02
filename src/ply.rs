@@ -51,22 +51,22 @@ impl FromStr for DataType {
 }
 
 impl DataType {
-    fn is_int(&self) -> bool {
+    pub fn is_int(&self) -> bool {
         match *self {
             DataType::Float32 | DataType::Float64 => false,
             _ => true,
         }
     }
 
-    // fn byte_size(&self) -> i32 {
-    //     match *self {
-    //         DataType::Int8  | DataType::Uint8  => 1,
-    //         DataType::Int16 | DataType::Uint16 => 2,
-    //         DataType::Int32 | DataType::Uint32 => 4,
-    //         DataType::Float32 => 4,
-    //         DataType::Float64 => 8,
-    //     }
-    // }
+    pub fn byte_size(&self) -> i32 {
+        match *self {
+            DataType::Int8  | DataType::Uint8  => 1,
+            DataType::Int16 | DataType::Uint16 => 2,
+            DataType::Int32 | DataType::Uint32 => 4,
+            DataType::Float32 => 4,
+            DataType::Float64 => 8,
+        }
+    }
 
     // fn decode_int(&self, bytes: &[u8]) -> Result<i64, String> {
     //     if bytes.len() < self.byte_size() as usize {

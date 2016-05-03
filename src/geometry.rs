@@ -144,25 +144,19 @@ pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u3
     }
 
     // Postprocessing. Calculate the bounding box.
-    let mut bb_min = verts[0].position_vec().clone();
-    let mut bb_max = bb_min.clone();
+    let mut bb_min = Vector3::max_value();
+    let mut bb_max = Vector3::min_value();
     for v in verts.iter() {
-        let pos = v.position_vec();
-        if pos.x < bb_min.x { bb_min.x = pos.x }
-        if pos.y < bb_min.y { bb_min.y = pos.y }
-        if pos.z < bb_min.z { bb_min.z = pos.z }
-        if pos.x > bb_max.x { bb_max.x = pos.x }
-        if pos.y > bb_max.y { bb_max.y = pos.y }
-        if pos.z > bb_max.z { bb_max.z = pos.z }
+        bb_min = bb_min.inf(v.position_vec());
+        bb_max = bb_max.sup(v.position_vec());
     }
 
     // Scale everything so that it's in the range -1 to 1 and centered.
     let bcenter = (bb_max + bb_min) / 2.0;
     let new_bb_max = bb_max - bcenter;
-    let max_dim = (new_bb_max.as_ref() as &[f32; 3]).iter().fold(new_bb_max.x, |m, &v| m.max(v));
+    let max_dim = new_bb_max.iter().fold(f32::min_value(), |m, &v| m.max(v));
     for v in verts.iter_mut() {
-        let new_pos = (v.position_vec().clone() - bcenter) / max_dim;
-        v.position = *new_pos.as_ref();
+        v.position = *((*v.position_vec() - bcenter) / max_dim).as_ref();
     }
 
     // Set the colors, assuming all vertices are opaque.

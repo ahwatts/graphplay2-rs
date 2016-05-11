@@ -16,7 +16,7 @@ in vec3 v_eye_dir;
 in vec3 v_light_dir[MAX_LIGHTS];
 in vec3 v_light_reflect_dir[MAX_LIGHTS];
 
-layout (shared) uniform light_list {
+layout (std140) uniform light_list {
     LightProperties lights[MAX_LIGHTS];
 };
 

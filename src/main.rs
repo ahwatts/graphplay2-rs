@@ -14,6 +14,7 @@ pub mod ply;
 pub mod scene;
 pub mod shaders;
 
+use body::Body;
 use camera::Camera;
 use glium::{glutin, DisplayBuild, Surface};
 use mesh::Mesh;
@@ -54,10 +55,11 @@ fn main() {
 
     let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_bunny.ply"));
     let bunny_mesh = Rc::new(RefCell::new(Mesh::new(bunny, lit)));
+    let mut bunny_body = Body::new();
     scene.add_object(bunny_mesh.clone());
 
-    let pi = f32::pi();
-    let (mut xrot, mut yrot) = (0.0, 0.0);
+    // let pi = f32::pi();
+    // let (mut xrot, mut yrot) = (0.0, 0.0);
     let mut prev_time = Instant::now();
 
     loop {
@@ -65,16 +67,18 @@ fn main() {
         let time = Instant::now();
         let elapsed = time.duration_since(prev_time);
         prev_time = time;
-        let nanos = elapsed.subsec_nanos(); // Assume that the frame took < 1s.
-        let ftime = nanos as f32 / 1_000_000_000_f32;
+        let secs = elapsed.as_secs() as f32;
+        let subsecs = elapsed.subsec_nanos() as f32 / 1_000_000_000_f32;
+        let ftime = secs + subsecs;
+        bunny_body.update(ftime);
 
-        // Update things.
-        yrot = (yrot + ftime * pi / 20.0) % (2.0 * pi);
-        xrot = (xrot + ftime * pi / 60.0) % (2.0 * pi);
-        let yrot_m = Vector3::y() * yrot;
-        let xrot_m = Vector3::x() * xrot;
-        // octo_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
-        bunny_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
+        // // Update things.
+        // yrot = (yrot + ftime * pi / 20.0) % (2.0 * pi);
+        // xrot = (xrot + ftime * pi / 60.0) % (2.0 * pi);
+        // let yrot_m = Vector3::y() * yrot;
+        // let xrot_m = Vector3::x() * xrot;
+        // // octo_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
+        // bunny_mesh.borrow_mut().orientation = Rotation3::new(yrot_m).append_rotation(&xrot_m);
 
         // Render.
         let mut target = display.draw();

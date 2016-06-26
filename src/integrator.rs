@@ -27,6 +27,8 @@ pub trait Integrator<X: Dependent<T>, T: Independent>
     fn step(&mut self, delta_time: &T) -> X;
     fn dependent(&self) -> X;
     fn independent(&self) -> T;
+    fn set_dependent(&mut self, new_dependent: X);
+    fn set_independent(&mut self, new_independent: T);
 }
 
 #[derive(Debug)]
@@ -56,4 +58,6 @@ impl<X: Dependent<T>, T: Independent> Integrator<X, T> for Euler<X, T> {
 
     fn dependent(&self) -> X { self.dependent.clone() }
     fn independent(&self) -> T { self.independent }
+    fn set_dependent(&mut self, new_dependent: X) { self.dependent = new_dependent }
+    fn set_independent(&mut self, new_independent: T) { self.independent = new_independent }
 }

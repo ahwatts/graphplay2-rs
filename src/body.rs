@@ -17,9 +17,9 @@ impl Body {
 
         let body = Body(Rc::new(RefCell::new(inner)));
         let equation = Box::new(BodyStateEquation::for_body(&body));
-        let integrator = Box::new(Euler::new(equation, init_phase, init_time));
+        // let integrator = Box::new(Euler::new(equation, init_phase, init_time));
 
-        body.0.borrow_mut().integrator = Some(integrator);
+        // body.0.borrow_mut().integrator = Some(integrator);
 
         body
     }
@@ -54,7 +54,7 @@ impl Body {
 
     pub fn update(&mut self, dt: f32) {
         self.with_mut_inner(|inner| {
-            inner.integrator.as_mut().unwrap().step(&dt);
+            // inner.integrator.as_mut().unwrap().step(&dt);
         });
     }
 
@@ -72,7 +72,7 @@ struct BodyInner {
     position: Vector3<f32>,
     velocity: Vector3<f32>,
     force: Vector3<f32>,
-    integrator: Option<Box<Integrator<Phase, f32>>>,
+    // integrator: Option<Box<Integrator<Phase, f32>>>,
 }
 
 impl BodyInner {
@@ -82,7 +82,7 @@ impl BodyInner {
             velocity: Vector3::new(0.0, 0.0, 0.0),
             force: Vector3::new(0.0, 0.0, 0.0),
             mass: 0.0,
-            integrator: None,
+            // integrator: None,
         }
     }
 
@@ -91,8 +91,8 @@ impl BodyInner {
             position: self.position,
             momentum: self.velocity * self.mass,
         };
-        self.integrator.as_mut().unwrap()
-            .set_dependent(phase);
+        // self.integrator.as_mut().unwrap()
+        //     .set_dependent(phase);
     }
 }
 
@@ -150,7 +150,7 @@ impl BodyStateEquation {
 }
 
 impl FirstOrderODE<Phase, f32> for BodyStateEquation {
-    fn derivative(&self, _pos: &Phase, _time: &f32) -> Phase {
+    fn derivative(&self, _pos: Phase, _time: f32) -> Phase {
         let strong_body = self.body.upgrade().unwrap();
         let body = strong_body.borrow();
         Phase {

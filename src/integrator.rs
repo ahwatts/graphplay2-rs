@@ -1,63 +1,77 @@
 use num::Float;
-use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 
-pub trait Dependent<F: Float> where
-    Self: Sized + Debug + Clone, // + Clone + Copy + Debug,
-    Self: AddAssign + MulAssign<F>,
-    Self: Add + Mul<F, Output = Self>
+/// An independent variable, i.e, time in a differential
+/// equation. Basically can only be f32 or f64.
+pub trait Independent: Float + Clone + Copy + AddAssign + Add {}
+
+impl<F: Float + AddAssign> Independent for F {}
+
+/// The dependent variable, i.e, position in a differential equation.
+///
+/// This is also the "shape" of the equation's derivatives; i.e, if
+/// the function is vector-valued, we assume its derivatives are also
+/// vector-valued.
+pub trait Dependent<T: Independent> where
+    Self: Sized + Clone + Copy,
+    Self: AddAssign + MulAssign<T>,
+    Self: Add<Self, Output = Self> + Mul<T, Output = Self>
 {}
 
-pub trait Independent where
-    Self: Float + Debug, // + Sized + Clone + Copy + Debug + Float,
-    Self: AddAssign + Add
-{}
-
-impl<F: Float + Debug + AddAssign> Independent for F {}
-
-pub trait FirstOrderODE<X: Dependent<T>, T: Independent>
-    where Self: Debug
+/// A first-order ordinary differential equation.
+///
+/// In mixed Rust / math terms, X' = self.derivative(X, T)
+pub trait FirstOrderODE<X, T>
+    where X: Dependent<T>, T: Independent
 {
-    fn derivative(&self, pos: &X, time: &T) -> X;
+    fn derivative(&self, dep: X, indep: T) -> X;
 }
 
-pub trait Integrator<X: Dependent<T>, T: Independent>
-    where Self: Debug
-{
-    fn step(&mut self, delta_time: &T) -> X;
-    fn dependent(&self) -> X;
-    fn independent(&self) -> T;
-    fn set_dependent(&mut self, new_dependent: X);
-    fn set_independent(&mut self, new_independent: T);
-}
-
-#[derive(Debug)]
-pub struct Euler<X: Dependent<T>, T: Independent> {
-    ode: Box<FirstOrderODE<X, T>>,
-    dependent: X,
-    independent: T,
-}
-
-impl<X: Dependent<T>, T: Independent> Euler<X, T> {
-    pub fn new(ode: Box<FirstOrderODE<X, T>>, x0: X, t0: T) -> Euler<X, T> {
-        Euler {
-            ode: ode,
-            dependent: x0,
-            independent: t0,
-        }
+impl<F: Fn(X, T) -> X, X: Dependent<T>, T: Independent> FirstOrderODE<X, T> for F {
+    fn derivative(&self, dep: X, indep: T) -> X {
+        self(dep, indep)
     }
 }
 
-impl<X: Dependent<T>, T: Independent> Integrator<X, T> for Euler<X, T> {
-    fn step(&mut self, delta_time: &T) -> X {
-        let xdot = self.ode.derivative(&self.dependent, &self.independent);
-        self.dependent += xdot * *delta_time;
-        self.independent += *delta_time;
-        self.dependent.clone()
-    }
+/// Something which can numerically integrate one step of a
+/// first-order ODE, given an equation, the current values of X and T,
+/// and the time step.
+pub trait Integrator<E, X, T>
+    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+{
+    fn step(&mut self, equation: &E, dep: X, indep: T, step: T) -> X;
+}
 
-    fn dependent(&self) -> X { self.dependent.clone() }
-    fn independent(&self) -> T { self.independent }
-    fn set_dependent(&mut self, new_dependent: X) { self.dependent = new_dependent }
-    fn set_independent(&mut self, new_independent: T) { self.independent = new_independent }
+impl<F, E, X, T> Integrator<E, X, T> for F
+    where F: Fn(&E, X, T, T) -> X,
+          E: FirstOrderODE<X, T>,
+          X: Dependent<T>, T: Independent
+{
+    fn step(&mut self, equation: &E, dep: X, indep: T, step: T) -> X {
+        self(equation, dep, indep, step)
+    }
+}
+
+pub fn euler<E, X, T>(equation: &E, x0: X, t0: T, dt: T) -> X
+    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+{
+    let xdot = equation.derivative(x0, t0);
+    let dx = xdot * dt;
+    x0 + dx
+}
+
+pub fn rk4<E, X, T>(equation: &E, x0: X, t0: T, h: T) -> X
+    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+{
+    let two = T::from(2).unwrap();
+    let six = T::from(6).unwrap();
+    let h2 = h / two;
+    let h6 = h / six;
+
+    let k1 = equation.derivative(x0, t0);
+    let k2 = equation.derivative(x0 + k1*h2, t0 + h2);
+    let k3 = equation.derivative(x0 + k2*h2, t0 + h2);
+    let k4 = equation.derivative(x0 + k3*h,  t0 + h);
+
+    x0 + (k1 + k2*two + k3*two + k4) * h6
 }

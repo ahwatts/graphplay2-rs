@@ -7,6 +7,7 @@ pub struct Body {
     position: Vector3<f32>,
     velocity: Vector3<f32>,
     force: Vector3<f32>,
+    integrator: Box<Integrator<Phase, f32>>,
 }
 
 impl Body {
@@ -16,6 +17,7 @@ impl Body {
             velocity: Vector3::new(0.0, 0.0, 0.0),
             force: Vector3::new(0.0, 0.0, 0.0),
             mass: 0.0,
+            integrator: Box::new(euler),
         }
     }
 
@@ -39,21 +41,17 @@ impl Body {
     }
 
     pub fn update(&mut self, dt: f32) {
-        let new_state = {
-            let state_eqn = |state: Phase, _time: f32| {
-                Phase {
-                    position: state.momentum / self.mass,
-                    momentum: self.force / self.mass,
-                }
-            };
-
-            let state = Phase {
-                position: self.position,
-                momentum: self.velocity * self.mass,
-            };
-
-            euler(&state_eqn, state, 0.0, dt)
+        let state = Phase {
+            position: self.position,
+            momentum: self.velocity * self.mass,
         };
+
+        let new_state = self.integrator.step(state, 0.0, dt, &|y: Phase, _t: f32| {
+            Phase {
+                position: y.momentum / self.mass,
+                momentum: self.force,
+            }
+        });
 
         self.position = new_state.position;
         self.velocity = new_state.momentum / self.mass;

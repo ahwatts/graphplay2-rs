@@ -36,32 +36,33 @@ impl<F: Fn(X, T) -> X, X: Dependent<T>, T: Independent> FirstOrderODE<X, T> for 
 /// Something which can numerically integrate one step of a
 /// first-order ODE, given an equation, the current values of X and T,
 /// and the time step.
-pub trait Integrator<E, X, T>
-    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+pub trait Integrator<X, T>
+    where X: Dependent<T>, T: Independent
 {
-    fn step(&mut self, equation: &E, dep: X, indep: T, step: T) -> X;
+    fn step(&self, dep: X, indep: T, step: T, equation: &FirstOrderODE<X, T>) -> X;
 }
 
-impl<F, E, X, T> Integrator<E, X, T> for F
-    where F: Fn(&E, X, T, T) -> X,
-          E: FirstOrderODE<X, T>,
+impl<F, X, T> Integrator<X, T> for F
+    where F: Fn(X, T, T, &FirstOrderODE<X, T>) -> X,
           X: Dependent<T>, T: Independent
 {
-    fn step(&mut self, equation: &E, dep: X, indep: T, step: T) -> X {
-        self(equation, dep, indep, step)
+    fn step(&self, dep: X, indep: T, step: T, equation: &FirstOrderODE<X, T>) -> X {
+        self(dep, indep, step, equation)
     }
 }
 
-pub fn euler<E, X, T>(equation: &E, x0: X, t0: T, dt: T) -> X
-    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+/// Euler's method.
+pub fn euler<X, T>(x0: X, t0: T, dt: T, equation: &FirstOrderODE<X, T>) -> X
+    where X: Dependent<T>, T: Independent
 {
     let xdot = equation.derivative(x0, t0);
     let dx = xdot * dt;
     x0 + dx
 }
 
-pub fn rk4<E, X, T>(equation: &E, x0: X, t0: T, h: T) -> X
-    where E: FirstOrderODE<X, T>, X: Dependent<T>, T: Independent
+/// Fourth-order Runge-Kutta method.
+pub fn rk4<X, T>(x0: X, t0: T, h: T, equation: &FirstOrderODE<X, T>) -> X
+    where X: Dependent<T>, T: Independent
 {
     let two = T::from(2).unwrap();
     let six = T::from(6).unwrap();

@@ -600,7 +600,7 @@ end_header
     }
 
     fn octohedron_binary_le() -> Document {
-        Document::from_file("test/files/octohedron_binary_le.ply").unwrap()
+        Document::from_file("tests/files/octohedron_binary_le.ply").unwrap()
     }
 
     #[test]

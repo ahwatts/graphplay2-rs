@@ -1,26 +1,19 @@
 extern crate byteorder;
+extern crate graphplay2;
 extern crate nalgebra;
 extern crate num;
 
 #[macro_use]
 extern crate glium;
 
-pub mod body;
-pub mod camera;
-pub mod geometry;
-pub mod integrator;
-pub mod mesh;
-pub mod ply;
-pub mod scene;
-pub mod shaders;
-
-use body::Body;
-use camera::Camera;
 use glium::{glutin, DisplayBuild, Surface};
-use mesh::Mesh;
+use graphplay2::body::Body;
+use graphplay2::camera::Camera;
+use graphplay2::mesh::Mesh;
+use graphplay2::scene::Scene;
+use graphplay2::shaders::{self, LightProperties};
+use graphplay2::geometry;
 use nalgebra::*;
-use scene::Scene;
-use shaders::LightProperties;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;

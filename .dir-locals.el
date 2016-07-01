@@ -1,1 +1,2 @@
-((nil . ((flycheck-rust-crate-type . "bin"))))
+((nil . (;; (flycheck-rust-crate-type . "bin")
+         )))

@@ -13,7 +13,7 @@ impl<F: Float + AddAssign> Independent for F {}
 /// the function is vector-valued, we assume its derivatives are also
 /// vector-valued.
 pub trait Dependent<T: Independent> where
-    Self: Sized + Clone + Copy,
+    Self: Clone + Copy,
     Self: AddAssign + MulAssign<T>,
     Self: Add<Self, Output = Self> + Mul<T, Output = Self>
 {}

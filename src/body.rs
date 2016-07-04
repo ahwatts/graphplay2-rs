@@ -47,6 +47,8 @@ impl Body {
         };
 
         let new_state = self.integrator.step(state, 0.0, dt, &|y: Phase, _t: f32| {
+            // This closure returns the *derivatives* of the position
+            // and momentum, i.e, the velocity and the net force.
             Phase {
                 position: y.momentum / self.mass,
                 momentum: self.force,

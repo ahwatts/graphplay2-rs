@@ -68,34 +68,6 @@ impl DataType {
         }
     }
 
-    // fn decode_int(&self, bytes: &[u8]) -> Result<i64, String> {
-    //     if bytes.len() < self.byte_size() as usize {
-    //         return Err(format!("Not enough bytes to decode {:?} from {:?}", self, bytes));
-    //     }
-
-    //     match *self {
-    //         DataType::Int8   => Ok(unsafe { *(bytes.as_ptr() as *const i8) } as i64),
-    //         DataType::Uint8  => Ok(unsafe { *(bytes.as_ptr() as *const u8) } as i64),
-    //         DataType::Int16  => Ok(unsafe { *(bytes.as_ptr() as *const i16) } as i64),
-    //         DataType::Uint16 => Ok(unsafe { *(bytes.as_ptr() as *const u16) } as i64),
-    //         DataType::Int32  => Ok(unsafe { *(bytes.as_ptr() as *const i32) } as i64),
-    //         DataType::Uint32 => Ok(unsafe { *(bytes.as_ptr() as *const u32) } as i64),
-    //         _ => Err(format!("Cannot decode int for float: self = {:?}, bytes = {:?}", self, bytes)),
-    //     }
-    // }
-
-    // fn decode_float(&self, bytes: &[u8]) -> Result<f64, String> {
-    //     if bytes.len() < self.byte_size() as usize {
-    //         return Err(format!("Not enough bytes to decode {:?} from {:?}", self, bytes));
-    //     }
-
-    //     match *self {
-    //         DataType::Float32 => Ok(unsafe { *(bytes.as_ptr() as *const f32) } as f64),
-    //         DataType::Float64 => Ok(unsafe { *(bytes.as_ptr() as *const f64) } as f64),
-    //         _ => Err(format!("Cannot decode float for int: self = {:?}, bytes = {:?}", self, bytes)),
-    //     }
-    // }
-
     fn read_int<R: ReadBytesExt>(&self, reader: &mut R, format: &Format) -> io::Result<i64> {
         use self::DataType::*;
         use self::Format::*;
@@ -324,44 +296,6 @@ impl PropertyValue {
 
         Ok(())
     }
-
-    // fn push_binary_scalar_value(&mut self, value_bytes: &[u8], data_type: DataType) -> Result<(), String> {
-    //     match *self {
-    //         PropertyValue::IntScalar(ref mut ilist) => {
-    //             let ival = try!(data_type.decode_int(value_bytes));
-    //             ilist.push(ival);
-    //         },
-    //         PropertyValue::FloatScalar(ref mut flist) => {
-    //             let fval = try!(data_type.decode_float(value_bytes));
-    //             flist.push(fval);
-    //         },
-    //         _ => return Err("Cannot push scalar value to list property value".to_string()),
-    //     }
-
-    //     Ok(())
-    // }
-
-    // fn push_binary_list_value(&mut self, values_bytes: &[&[u8]], data_type: DataType) -> Result<(), String> {
-    //     match *self {
-    //         PropertyValue::IntList(ref mut illist) => {
-    //             let mut list = PropertyValue::IntScalar(vec![]);
-    //             for v in values_bytes.iter() {
-    //                 try!(list.push_binary_scalar_value(v, data_type));
-    //             }
-    //             illist.push(list.int_scalar().unwrap().clone());
-    //         },
-    //         PropertyValue::FloatList(ref mut fllist) => {
-    //             let mut list = PropertyValue::FloatScalar(vec![]);
-    //             for v in values_bytes.iter() {
-    //                 try!(list.push_binary_scalar_value(v, data_type));
-    //             }
-    //             fllist.push(list.float_scalar().unwrap().clone());
-    //         },
-    //         _ => return Err("Cannot push list value to scalar property value".to_string()),
-    //     }
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Debug)]
@@ -546,12 +480,6 @@ fn read_binary_element<T: BufRead>(element: &mut Element, format: Format, file: 
 
     Ok(())
 }
-
-// fn correct_endian(bytes: &mut [u8], format: Format) {
-//     if (cfg!(target_endian = "big") && format == Format::BinaryLittleEndian) || (cfg!(target_endian = "little") && format == Format::BinaryBigEndian) {
-//         bytes.reverse();
-//     }
-// }
 
 fn other_io_error(msg: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Other, msg)

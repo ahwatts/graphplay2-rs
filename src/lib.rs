@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate glutin;
 extern crate nalgebra;
 extern crate num;
 
@@ -7,6 +8,7 @@ extern crate glium;
 
 pub mod body;
 pub mod camera;
+pub mod events;
 pub mod geometry;
 pub mod integrator;
 pub mod mesh;

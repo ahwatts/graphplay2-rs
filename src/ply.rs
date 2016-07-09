@@ -1,4 +1,4 @@
-use byteorder::{ByteOrder, BigEndian, LittleEndian, ReadBytesExt};
+use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::io;

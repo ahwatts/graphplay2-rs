@@ -16,7 +16,7 @@ impl Body {
             position: Vector3::new(0.0, 0.0, 0.0),
             velocity: Vector3::new(0.0, 0.0, 0.0),
             force: Vector3::new(0.0, 0.0, 0.0),
-            mass: 0.0,
+            mass: 1.0,
             integrator: Box::new(euler),
         }
     }
@@ -38,6 +38,14 @@ impl Body {
     pub fn set_velocity(&mut self, new_velocity: Vector3<f32>) -> &mut Body {
         self.velocity = new_velocity;
         self
+    }
+
+    pub fn net_force(&self) -> Vector3<f32> {
+        self.force
+    }
+
+    pub fn add_force(&mut self, new_force: Vector3<f32>) {
+        self.force += new_force;
     }
 
     pub fn update(&mut self, dt: f32) {

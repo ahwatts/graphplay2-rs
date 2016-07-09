@@ -35,9 +35,9 @@ fn main() {
 
     let mut scene = Scene::new(
         &display,
-        Camera::new(Point3  { x: 0.0, y: 0.0, z: 5.0 },
-                    Point3  { x: 0.0, y: 0.0, z: 0.0 },
-                    Vector3 { x: 0.0, y: 1.0, z: 0.0 }),
+        Camera::new(Point3  { x: 0.0, y: 0.0, z: 50.0 },
+                    Point3  { x: 0.0, y: 0.0, z:  0.0 },
+                    Vector3 { x: 0.0, y: 1.0, z:  0.0 }),
         window_width, window_height);
 
     scene.set_light(0, LightProperties::new(true, [ 0.0, 10.0, 10.0 ], [ 1.0, 1.0, 1.0, 1.0 ], 10.0));
@@ -49,6 +49,7 @@ fn main() {
     let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_bunny.ply"));
     let bunny_mesh = Rc::new(RefCell::new(Mesh::new(bunny, lit)));
     let mut bunny_body = Body::new();
+    bunny_body.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
     scene.add_object(bunny_mesh.clone());
 
     // let pi = f32::pi();
@@ -63,7 +64,11 @@ fn main() {
         let secs = elapsed.as_secs() as f32;
         let subsecs = elapsed.subsec_nanos() as f32 / 1_000_000_000_f32;
         let ftime = secs + subsecs;
+
+        let restoring = bunny_body.position() * -0.2;
+        bunny_body.add_force(restoring);
         bunny_body.update(ftime);
+        bunny_mesh.borrow_mut().position = bunny_body.position().to_point();
 
         // // Update things.
         // yrot = (yrot + ftime * pi / 20.0) % (2.0 * pi);

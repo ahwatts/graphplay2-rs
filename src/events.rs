@@ -6,6 +6,7 @@ use std::default::Default;
 pub struct Events {
     pub quit: bool,
     pub mouse: Point2<f32>,
+    pub mouse_delta: Vector2<f32>,
     pub left_click: bool,
 }
 
@@ -19,10 +20,7 @@ impl Events {
             use glutin::MouseButton;
 
             match event {
-                Closed => {
-                    self.quit = true;
-                },
-                KeyboardInput(Pressed, _, Some(VirtualKeyCode::Escape)) => {
+                Closed | KeyboardInput(Pressed, _, Some(VirtualKeyCode::Escape)) => {
                     self.quit = true;
                 },
                 MouseInput(Pressed, MouseButton::Left) => {
@@ -32,8 +30,9 @@ impl Events {
                     self.left_click = false;
                 },
                 MouseMoved(x, y) => {
-                    self.mouse.x = x as f32;
-                    self.mouse.y = y as f32;
+                    let new_mouse = Point2 { x: x as f32, y: y as f32 };
+                    self.mouse_delta = new_mouse - self.mouse;
+                    self.mouse = new_mouse;
                 },
                 _ => {
                     println!("event = {:?}", event);
@@ -48,6 +47,7 @@ impl Default for Events {
         Events {
             quit: false,
             mouse: Point2 { x: 0.0, y: 0.0 },
+            mouse_delta: Vector2 { x: 0.0, y: 0.0 },
             left_click: false,
         }
     }

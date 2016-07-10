@@ -64,10 +64,18 @@ fn main() {
         let subsecs = elapsed.subsec_nanos() as f32 / 1_000_000_000_f32;
         let ftime = secs + subsecs;
 
-        let restoring = bunny_body.position() * -0.2;
+        // Update the world.
+        let restoring = bunny_body.position() * -0.4;
         bunny_body.add_force(restoring);
         bunny_body.update(ftime);
         bunny_mesh.borrow_mut().position = bunny_body.position().to_point();
+
+        // Update the camera.
+        if events.left_click {
+            let theta = -2.0 * f32::pi() * events.mouse_delta.x / (scene.viewport().width as f32);
+            let phi   = -1.0 * f32::pi() * events.mouse_delta.y / (scene.viewport().height as f32);
+            scene.camera.rotate(theta, phi);
+        }
 
         // Render.
         let mut target = display.draw();

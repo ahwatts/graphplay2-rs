@@ -20,7 +20,7 @@ pub trait SceneObject {
 
 pub struct Scene {
     objects: Vec<Rc<RefCell<SceneObject>>>,
-    camera: Camera<f32>,
+    pub camera: Camera<f32>,
     viewport: Rect,
 
     vp_buffer: UniformBuffer<ViewAndProjectionBlock>,
@@ -51,6 +51,10 @@ impl Scene {
         }
     }
 
+    pub fn viewport(&self) -> Rect {
+        self.viewport
+    }
+
     pub fn add_object<O: SceneObject + 'static>(&mut self, object: Rc<RefCell<O>>) {
         self.objects.push(object);
     }
@@ -60,7 +64,6 @@ impl Scene {
         mapped_lights.lights[index] = light;
     }
 
-    #[allow(dead_code)]
     pub fn resize(&mut self, width: u32, height: u32) {
         self.viewport.width = width;
         self.viewport.height = height;

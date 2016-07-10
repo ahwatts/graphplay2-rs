@@ -18,26 +18,21 @@ impl<F: BaseFloat + ApproxEq<F> + Debug> Camera<F> {
     }
 
     pub fn rotate(&mut self, dtheta: F, dphi: F) {
-        // println!("position = {:?}, dtheta = {:?}, dphi = {:?}", self.position, dtheta, dphi);
         let theta_rot: Rotation3<F> = Rotation3::new(self.up * dtheta);
         let mut cam_dir = self.position - self.looking_at;
         let cam_dist = cam_dir.norm();
         cam_dir /= cam_dist;
-        // println!("cam_dir1 = {:?}, cam_dist = {:?}", cam_dir, cam_dist);
 
         cam_dir = theta_rot.rotate(&cam_dir);
-        // println!("cam_dir2 = {:?}", cam_dir);
 
         let horizontal = cross(&self.up, &cam_dir);
         let phi_rot: Rotation3<F> = Rotation3::new(horizontal * dphi);
         cam_dir = phi_rot.rotate(&cam_dir);
-        // println!("cam_dir3 = {:?}", cam_dir);
 
         let angle = dot(&cam_dir, &self.up);
         if angle > Cast::from(0.99863) || angle < Cast::from(-0.99863) {
             cam_dir = phi_rot.inverse_rotate(&cam_dir);
         }
-        // println!("cam_dir4 = {:?}", cam_dir);
 
         self.position = self.looking_at + cam_dir*cam_dist;
     }

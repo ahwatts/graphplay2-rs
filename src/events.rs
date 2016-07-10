@@ -33,6 +33,7 @@ impl Events {
                     let new_mouse = Point2 { x: x as f32, y: y as f32 };
                     self.mouse_delta = new_mouse - self.mouse;
                     self.mouse = new_mouse;
+                    // println!("mouse = {:?} mouse_delta = {:?}", self.mouse, self.mouse_delta);
                 },
                 _ => {
                     println!("event = {:?}", event);

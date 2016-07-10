@@ -17,7 +17,8 @@ use graphplay2::geometry;
 use nalgebra::*;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Instant;
+use std::thread;
+use std::time::{Duration, Instant};
 
 fn main() {
     let (width, height) = (1024, 768);
@@ -52,6 +53,8 @@ fn main() {
     scene.add_object(bunny_mesh.clone());
 
     let mut prev_time = Instant::now();
+    let pi = f32::pi();
+    let frame_period = Duration::from_millis(1_000 / 60);
 
     loop {
         events.pump(&display);
@@ -72,8 +75,8 @@ fn main() {
 
         // Update the camera.
         if events.left_click {
-            let theta = -2.0 * f32::pi() * events.mouse_delta.x / (scene.viewport().width as f32);
-            let phi   = -1.0 * f32::pi() * events.mouse_delta.y / (scene.viewport().height as f32);
+            let theta = -2.0 * pi * events.mouse_delta.x / (scene.viewport().width as f32);
+            let phi   = -1.0 * pi * events.mouse_delta.y / (scene.viewport().height as f32);
             scene.camera.rotate(theta, phi);
         }
 
@@ -85,6 +88,13 @@ fn main() {
 
         if events.quit {
             break;
+        }
+
+        let update_time = Instant::now();
+        let update_duration = update_time.duration_since(time);
+        if update_duration < frame_period {
+            let sleep_duration = frame_period - update_duration;
+            thread::sleep(sleep_duration);
         }
     }
 }

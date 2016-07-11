@@ -34,12 +34,12 @@ fn main() {
     let (window_width, window_height) = display.get_window().unwrap()
         .get_inner_size_pixels().unwrap();
 
-    let _unlit = Rc::new(shaders::unlit(&display));
+    let unlit = Rc::new(shaders::unlit(&display));
     let lit = Rc::new(shaders::lit(&display));
 
     let mut scene = Scene::new(
         &display,
-        Camera::new(Point3  { x: 0.0, y: 0.0, z: 50.0 },
+        Camera::new(Point3  { x: 0.0, y: 0.0, z: 70.0 },
                     Point3  { x: 0.0, y: 0.0, z:  0.0 },
                     Vector3 { x: 0.0, y: 1.0, z:  0.0 }),
         window_width, window_height);
@@ -51,6 +51,11 @@ fn main() {
     let mut bunny_body = Body::new();
     bunny_body.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
     scene.add_object(bunny_mesh.clone());
+
+    let cube = Rc::new(geometry::wireframe_cube(&display));
+    let cube_mesh = Rc::new(RefCell::new(Mesh::new(cube, unlit)));
+    cube_mesh.borrow_mut().scale = 10.0;
+    scene.add_object(cube_mesh.clone());
 
     let mut prev_time = Instant::now();
     let pi = f32::pi();

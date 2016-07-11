@@ -17,9 +17,9 @@ impl PCNVertex {
         From::from(&self.position)
     }
 
-    // pub fn normal_vec(&self) -> &Vector3<f32> {
-    //     From::from(&self.normal)
-    // }
+    pub fn normal_vec(&self) -> &Vector3<f32> {
+        From::from(&self.normal)
+    }
 }
 
 implement_vertex!(PCNVertex, position, color, normal);
@@ -55,15 +55,6 @@ impl<V: Vertex, I: Index> Geometry<V, I> {
     }
 }
 
-static OCTOHEDRON_VERTICES: [PCNVertex; 6] = [
-    PCNVertex { position: [  1.0,  0.0,  0.0, ], color: [ 1.0, 0.0, 0.0, 1.0 ], normal: [  1.0,  0.0,  0.0 ] },
-    PCNVertex { position: [ -1.0,  0.0,  0.0, ], color: [ 1.0, 0.0, 0.0, 1.0 ], normal: [ -1.0,  0.0,  0.0 ] },
-    PCNVertex { position: [  0.0,  0.0,  1.0, ], color: [ 0.0, 0.0, 1.0, 1.0 ], normal: [  0.0,  0.0,  1.0 ] },
-    PCNVertex { position: [  0.0,  0.0, -1.0, ], color: [ 0.0, 0.0, 1.0, 1.0 ], normal: [  0.0,  0.0, -1.0 ] },
-    PCNVertex { position: [  0.0, -1.0,  0.0, ], color: [ 0.0, 1.0, 0.0, 1.0 ], normal: [  0.0, -1.0,  0.0 ] },
-    PCNVertex { position: [  0.0,  1.0,  0.0, ], color: [ 0.0, 1.0, 0.0, 1.0 ], normal: [  0.0,  1.0,  0.0 ] },
-];
-
 fn find_or_add_vert<T: Vertex + PartialEq>(verts: &mut Vec<T>, new_vert: T) -> usize {
     match verts.iter().position(|v| *v == new_vert) {
         Some(index) => index,
@@ -74,6 +65,15 @@ fn find_or_add_vert<T: Vertex + PartialEq>(verts: &mut Vec<T>, new_vert: T) -> u
         }
     }
 }
+
+static OCTOHEDRON_VERTICES: [PCNVertex; 6] = [
+    PCNVertex { position: [  1.0,  0.0,  0.0, ], color: [ 1.0, 0.0, 0.0, 1.0 ], normal: [  1.0,  0.0,  0.0 ] },
+    PCNVertex { position: [ -1.0,  0.0,  0.0, ], color: [ 1.0, 0.0, 0.0, 1.0 ], normal: [ -1.0,  0.0,  0.0 ] },
+    PCNVertex { position: [  0.0,  0.0,  1.0, ], color: [ 0.0, 0.0, 1.0, 1.0 ], normal: [  0.0,  0.0,  1.0 ] },
+    PCNVertex { position: [  0.0,  0.0, -1.0, ], color: [ 0.0, 0.0, 1.0, 1.0 ], normal: [  0.0,  0.0, -1.0 ] },
+    PCNVertex { position: [  0.0, -1.0,  0.0, ], color: [ 0.0, 1.0, 0.0, 1.0 ], normal: [  0.0, -1.0,  0.0 ] },
+    PCNVertex { position: [  0.0,  1.0,  0.0, ], color: [ 0.0, 1.0, 0.0, 1.0 ], normal: [  0.0,  1.0,  0.0 ] },
+];
 
 static OCTOHEDRON_ELEMENTS: [usize; 24] = [
     4, 0, 2, 4, 3, 0, 4, 1, 3, 4, 2, 1,
@@ -111,6 +111,29 @@ pub fn octohedron<F: Facade>(facade: &F) -> Geometry<PCNVertex, u16> {
     }
 
     Geometry::new(facade, PrimitiveType::TrianglesList, verts, elems)
+}
+
+static WIREFRAME_CUBE_VERTICES: [PCNVertex; 8] = [
+    PCNVertex { position: [  1.0,   1.0,   1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [  0.577350269,   0.577350269,   0.577350269 ] }, // 0
+    PCNVertex { position: [  1.0,   1.0,  -1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [  0.577350269,   0.577350269,  -0.577350269 ] }, // 1
+    PCNVertex { position: [  1.0,  -1.0,   1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [  0.577350269,  -0.577350269,   0.577350269 ] }, // 2
+    PCNVertex { position: [  1.0,  -1.0,  -1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [  0.577350269,  -0.577350269,  -0.577350269 ] }, // 3
+    PCNVertex { position: [ -1.0,   1.0,   1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [ -0.577350269,   0.577350269,   0.577350269 ] }, // 4
+    PCNVertex { position: [ -1.0,   1.0,  -1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [ -0.577350269,   0.577350269,  -0.577350269 ] }, // 5
+    PCNVertex { position: [ -1.0,  -1.0,   1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [ -0.577350269,  -0.577350269,   0.577350269 ] }, // 6
+    PCNVertex { position: [ -1.0,  -1.0,  -1.0 ], color: [ 1.0, 1.0, 1.0, 1.0 ], normal: [ -0.577350269,  -0.577350269,  -0.577350269 ] }, // 7
+];
+
+static WIREFRAME_CUBE_ELEMENTS: [usize; 24] = [
+    0, 2, 2, 6, 6, 4, 4, 0,
+    0, 1, 2, 3, 4, 5, 6, 7,
+    1, 3, 3, 7, 7, 5, 5, 1,
+];
+
+pub fn wireframe_cube<F: Facade>(facade: &F) -> Geometry<PCNVertex, u32> {
+    let verts: Vec<PCNVertex> = WIREFRAME_CUBE_VERTICES.to_vec();
+    let elems: Vec<u32> = WIREFRAME_CUBE_ELEMENTS.iter().map(|e| *e as u32).collect();
+    Geometry::new(facade, PrimitiveType::LinesList, verts, elems)
 }
 
 pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u32> {

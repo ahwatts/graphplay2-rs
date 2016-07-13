@@ -1,5 +1,4 @@
 extern crate byteorder;
-extern crate graphplay2;
 extern crate nalgebra;
 extern crate num;
 
@@ -7,18 +6,27 @@ extern crate num;
 extern crate glium;
 
 use glium::{glutin, DisplayBuild, Surface};
-use graphplay2::body::Body;
-use graphplay2::camera::Camera;
-use graphplay2::events::Events;
-use graphplay2::mesh::Mesh;
-use graphplay2::scene::Scene;
-use graphplay2::shaders::{self, LightProperties};
-use graphplay2::geometry;
+use body::Body;
+use camera::Camera;
+use events::Events;
+use mesh::Mesh;
+use scene::Scene;
+use shaders::LightProperties;
 use nalgebra::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::thread;
 use std::time::{Duration, Instant};
+
+pub mod body;
+pub mod camera;
+pub mod events;
+pub mod geometry;
+pub mod integrator;
+pub mod mesh;
+pub mod ply;
+pub mod scene;
+pub mod shaders;
 
 fn main() {
     let (width, height) = (1024, 768);

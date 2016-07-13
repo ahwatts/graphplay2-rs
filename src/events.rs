@@ -14,10 +14,10 @@ impl Events {
     pub fn pump(&mut self, display: &Display) {
         // Handle updates.
         for event in display.poll_events() {
-            use glutin::Event::*;
-            use glutin::ElementState::*;
-            use glutin::VirtualKeyCode;
-            use glutin::MouseButton;
+            use glium::glutin::Event::*;
+            use glium::glutin::ElementState::*;
+            use glium::glutin::VirtualKeyCode;
+            use glium::glutin::MouseButton;
 
             match event {
                 Closed | KeyboardInput(Pressed, _, Some(VirtualKeyCode::Escape)) => {

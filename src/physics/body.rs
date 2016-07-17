@@ -1,5 +1,5 @@
 use nalgebra::*;
-use integrator::*;
+use physics::integrator::*;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
 
 pub struct Body {

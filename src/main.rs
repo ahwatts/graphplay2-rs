@@ -6,11 +6,10 @@ extern crate num;
 extern crate glium;
 
 use glium::{glutin, DisplayBuild, Surface};
-use body::Body;
 use camera::Camera;
 use events::Events;
 use mesh::Mesh;
-use physics::{PhysicsSystem, Spring};
+use physics::{Spring, Body, System};
 use scene::Scene;
 use shaders::LightProperties;
 use nalgebra::*;
@@ -19,11 +18,9 @@ use std::rc::{Rc, Weak};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub mod body;
 pub mod camera;
 pub mod events;
 pub mod geometry;
-pub mod integrator;
 pub mod mesh;
 pub mod physics;
 pub mod ply;
@@ -70,7 +67,7 @@ fn main() {
     scene.add_object(cube_mesh.clone());
 
     // Create the physics environment.
-    let mut world = PhysicsSystem::new();
+    let mut world = System::new();
 
     let weak_bunny_body_cell = world.add_body(Body::new());
     if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {

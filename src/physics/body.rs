@@ -1,7 +1,9 @@
 use nalgebra::*;
-use physics::integrator::*;
+use physics::integrator::Dependent;
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
+use std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct BodyState {
@@ -11,13 +13,18 @@ struct BodyState {
 
 const FUTURE_INDEX:  usize = 0;
 const CURRENT_INDEX: usize = 1;
-const OLDEST_INDEX:  usize = 2;
+const OLDEST_INDEX:  usize = 1;
 const KEPT_STATES:   usize = OLDEST_INDEX + 1;
 
-pub struct Body {
+#[derive(Clone, Debug)]
+pub struct Body(Rc<RefCell<BodyInner>>);
+
+#[derive(Clone, Debug)]
+struct BodyInner {
+    asleep: bool,
     mass: f32,
+    inv_mass: f32,
     states: VecDeque<BodyState>,
-    integrator: Box<Integrator<Phase, f32>>,
 }
 
 impl Body {
@@ -28,63 +35,86 @@ impl Body {
         };
         let initial_force = Vector3::new(0.0, 0.0, 0.0);
 
-        let mut states = VecDeque::with_capacity(KEPT_STATES);
+        let mut states = VecDeque::with_capacity(KEPT_STATES + 1);
         for _ in 0..KEPT_STATES {
             states.push_back(BodyState { phase: initial_phase, force: initial_force });
         }
 
-        Body {
+        let inner = BodyInner {
+            asleep: false,
             mass: 1.0,
+            inv_mass: 1.0,
             states: states,
-            integrator: Box::new(euler),
-        }
+        };
+
+        Body(Rc::new(RefCell::new(inner)))
     }
 
-    pub fn mass(&self) -> f32 { self.mass }
-    pub fn position(&self) -> Vector3<f32> { self.states[CURRENT_INDEX].phase.position }
-    pub fn velocity(&self) -> Vector3<f32> { self.states[CURRENT_INDEX].phase.momentum / self.mass }
+    pub fn is_asleep(&self) -> bool { self.0.borrow().asleep }
+    pub fn sleep(&mut self) { self.0.borrow_mut().asleep = true }
+    pub fn wake(&mut self) { self.0.borrow_mut().asleep = false }
+
+    pub fn mass(&self) -> f32 { self.0.borrow().mass }
 
     pub fn set_mass(&mut self, new_mass: f32) -> &mut Body {
-        self.mass = new_mass;
+        let mut inner = self.0.borrow_mut();
+        inner.mass = new_mass;
+        inner.inv_mass = 1.0 / new_mass;
         self
+    }
+
+    pub fn position(&self, alpha: f32) -> Vector3<f32> {
+        let inner = self.0.borrow();
+        let x0 = inner.states[CURRENT_INDEX].phase.position;
+        let x1 = inner.states[FUTURE_INDEX].phase.position;
+        x0*(1.0 - alpha) + x1*alpha
     }
 
     pub fn set_position(&mut self, new_position: Vector3<f32>) -> &mut Body {
-        self.states[FUTURE_INDEX].phase.position = new_position;
+        self.0.borrow_mut().states[FUTURE_INDEX].phase.position = new_position;
         self
     }
 
+    pub fn velocity(&self, alpha: f32) -> Vector3<f32> {
+        let inner = self.0.borrow();
+        let p0 = inner.states[CURRENT_INDEX].phase.momentum;
+        let p1 = inner.states[FUTURE_INDEX].phase.momentum;
+        (p0*(1.0 - alpha) + p1*alpha)*inner.inv_mass
+    }
+
     pub fn set_velocity(&mut self, new_velocity: Vector3<f32>) -> &mut Body {
-        self.states[FUTURE_INDEX].phase.momentum = new_velocity * self.mass;
+        let mut inner = self.0.borrow_mut();
+        inner.states[FUTURE_INDEX].phase.momentum = new_velocity * inner.mass;
         self
     }
 
     pub fn net_force(&self) -> Vector3<f32> {
-        self.states[CURRENT_INDEX].force
+        self.0.borrow().states[CURRENT_INDEX].force
     }
 
     pub fn add_force(&mut self, new_force: Vector3<f32>) {
-        self.states[FUTURE_INDEX].force += new_force;
+        self.0.borrow_mut().states[FUTURE_INDEX].force += new_force;
     }
 
-    pub fn update(&mut self, dt: f32) {
-        let state = self.states[FUTURE_INDEX].phase;
-        let force = self.states[FUTURE_INDEX].force;
-
-        let new_state = self.integrator.step(state, 0.0, dt, &|y: Phase, _t: f32| {
-            // This closure returns the *derivatives* of the position
-            // and momentum, i.e, the velocity and the net force.
-            Phase {
-                position: y.momentum / self.mass,
-                momentum: force,
-            }
-        });
-
-        self.states.push_front(BodyState {
-            phase: new_state,
+    pub fn update(&mut self, new_phase: Phase) {
+        let mut inner = self.0.borrow_mut();
+        inner.states.push_front(BodyState {
+            phase: new_phase,
             force: Vector3::new(0.0, 0.0, 0.0),
         });
-        self.states.pop_back();
+        inner.states.pop_back();
+
+        // let state = inner.states[FUTURE_INDEX].phase;
+        // let force = inner.states[FUTURE_INDEX].force;
+
+        // let new_state = self.integrator.step(state, 0.0, dt, &|y: Phase, _t: f32| {
+        //     // This closure returns the *derivatives* of the position
+        //     // and momentum, i.e, the velocity and the net force.
+        //     Phase {
+        //         position: y.momentum * self.inv_mass,
+        //         momentum: force,
+        //     }
+        // });
     }
 }
 

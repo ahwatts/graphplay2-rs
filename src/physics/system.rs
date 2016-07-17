@@ -1,32 +1,30 @@
-use physics::VectorField;
 use physics::body::Body;
+use physics::constraint::Constraint;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-pub static FRAME_PERIOD: f32 = 1.0 / 60.0;
-pub static TIME_STEP: f32 = 1.0 / 300.0;
+pub const FRAME_PERIOD: f32 = 1.0 / 60.0;
+pub const TIME_STEP: f32 = 1.0 / 300.0;
 
 pub struct System {
-    bodies: Vec<Rc<RefCell<Body>>>,
-    fields: Vec<Box<VectorField>>,
+    bodies: Vec<Body>,
+    constraints: Vec<Constraint>,
 }
 
 impl System {
     pub fn new() -> System {
         System {
             bodies: vec!(),
-            fields: vec!(),
+            constraints: vec!(),
         }
     }
 
-    pub fn add_body(&mut self, body: Body) -> Weak<RefCell<Body>> {
-        let body_rc = Rc::new(RefCell::new(body));
-        self.bodies.push(body_rc.clone());
-        Rc::downgrade(&body_rc)
+    pub fn add_body(&mut self, body: Body) {
+        self.bodies.push(body.clone());
     }
 
-    pub fn add_field<F: VectorField + 'static>(&mut self, field: F) {
-        self.fields.push(Box::new(field));
+    pub fn add_constraint(&mut self, constraint: Constraint) {
+        self.constraints.push(constraint);
     }
 
     pub fn update(&mut self, total_time: f32) {
@@ -54,19 +52,19 @@ impl System {
     }
 
     fn resolve_forces(&mut self) {
-        for field in self.fields.iter() {
-            for body_cell in self.bodies.iter_mut() {
-                let mut body = body_cell.borrow_mut();
-                let force = field.force_on(&*body);
-                body.add_force(force);
-            }
-        }
+        // for field in self.fields.iter() {
+        //     for body_cell in self.bodies.iter_mut() {
+        //         let mut body = body_cell.borrow_mut();
+        //         let force = field.force_on(&*body);
+        //         body.add_force(force);
+        //     }
+        // }
     }
 
     fn update_bodies(&mut self, time_step: f32) {
-        for body_cell in self.bodies.iter_mut() {
-            let mut body = body_cell.borrow_mut();
-            body.update(time_step);
-        }
+        // for body_cell in self.bodies.iter_mut() {
+        //     let mut body = body_cell.borrow_mut();
+        //     body.update(time_step);
+        // }
     }
 }

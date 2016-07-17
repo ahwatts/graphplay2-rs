@@ -1,29 +1,48 @@
 use nalgebra::*;
 use physics::integrator::*;
+use std::collections::VecDeque;
 use std::ops::{Add, AddAssign, Mul, MulAssign};
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct BodyState {
+    phase: Phase,
+    force: Vector3<f32>,
+}
+
+const FUTURE_INDEX:  usize = 0;
+const CURRENT_INDEX: usize = 1;
+const OLDEST_INDEX:  usize = 2;
+const KEPT_STATES:   usize = OLDEST_INDEX + 1;
 
 pub struct Body {
     mass: f32,
-    position: Vector3<f32>,
-    velocity: Vector3<f32>,
-    force: Vector3<f32>,
+    states: VecDeque<BodyState>,
     integrator: Box<Integrator<Phase, f32>>,
 }
 
 impl Body {
     pub fn new() -> Body {
-        Body {
+        let initial_phase = Phase {
             position: Vector3::new(0.0, 0.0, 0.0),
-            velocity: Vector3::new(0.0, 0.0, 0.0),
-            force: Vector3::new(0.0, 0.0, 0.0),
+            momentum: Vector3::new(0.0, 0.0, 0.0),
+        };
+        let initial_force = Vector3::new(0.0, 0.0, 0.0);
+
+        let mut states = VecDeque::with_capacity(KEPT_STATES);
+        for _ in 0..KEPT_STATES {
+            states.push_back(BodyState { phase: initial_phase, force: initial_force });
+        }
+
+        Body {
             mass: 1.0,
+            states: states,
             integrator: Box::new(euler),
         }
     }
 
     pub fn mass(&self) -> f32 { self.mass }
-    pub fn position(&self) -> Vector3<f32> { self.position }
-    pub fn velocity(&self) -> Vector3<f32> { self.velocity }
+    pub fn position(&self) -> Vector3<f32> { self.states[CURRENT_INDEX].phase.position }
+    pub fn velocity(&self) -> Vector3<f32> { self.states[CURRENT_INDEX].phase.momentum / self.mass }
 
     pub fn set_mass(&mut self, new_mass: f32) -> &mut Body {
         self.mass = new_mass;
@@ -31,41 +50,41 @@ impl Body {
     }
 
     pub fn set_position(&mut self, new_position: Vector3<f32>) -> &mut Body {
-        self.position = new_position;
+        self.states[FUTURE_INDEX].phase.position = new_position;
         self
     }
 
     pub fn set_velocity(&mut self, new_velocity: Vector3<f32>) -> &mut Body {
-        self.velocity = new_velocity;
+        self.states[FUTURE_INDEX].phase.momentum = new_velocity * self.mass;
         self
     }
 
     pub fn net_force(&self) -> Vector3<f32> {
-        self.force
+        self.states[CURRENT_INDEX].force
     }
 
     pub fn add_force(&mut self, new_force: Vector3<f32>) {
-        self.force += new_force;
+        self.states[FUTURE_INDEX].force += new_force;
     }
 
     pub fn update(&mut self, dt: f32) {
-        let state = Phase {
-            position: self.position,
-            momentum: self.velocity * self.mass,
-        };
+        let state = self.states[FUTURE_INDEX].phase;
+        let force = self.states[FUTURE_INDEX].force;
 
         let new_state = self.integrator.step(state, 0.0, dt, &|y: Phase, _t: f32| {
             // This closure returns the *derivatives* of the position
             // and momentum, i.e, the velocity and the net force.
             Phase {
                 position: y.momentum / self.mass,
-                momentum: self.force,
+                momentum: force,
             }
         });
 
-        self.position = new_state.position;
-        self.velocity = new_state.momentum / self.mass;
-        self.force = Vector3::new(0.0, 0.0, 0.0);
+        self.states.push_front(BodyState {
+            phase: new_state,
+            force: Vector3::new(0.0, 0.0, 0.0),
+        });
+        self.states.pop_back();
     }
 }
 

@@ -1,11 +1,7 @@
-use nalgebra::*;
-
-pub use self::body::Body;
 pub use self::constraint::Constraint;
 pub use self::integrator::{euler, rk4, Independent, Dependent, FirstOrderODE, Integrator};
-pub use self::system::System;
+pub use self::system::{Body, System};
 
-pub mod body;
 pub mod constraint;
 pub mod integrator;
 pub mod system;

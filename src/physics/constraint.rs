@@ -1,6 +1,7 @@
 use nalgebra::*;
-use physics::body::Body;
+use physics::system::Body;
 
+#[allow(dead_code)]
 pub struct Constraint {
     body_a: Body,
     body_b: Body,
@@ -23,7 +24,7 @@ impl Spring {
 
 impl ConstraintCalc for Spring {
     fn force(&self, _: &Constraint, pos_a: Point3<f32>, pos_b: Point3<f32>) -> Vector3<f32> {
-        let sep = (pos_b - pos_a).as_vector();
+        let sep = pos_b - pos_a;
         sep * self.0
     }
 }

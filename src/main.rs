@@ -9,12 +9,13 @@ use glium::{glutin, DisplayBuild, Surface};
 use camera::Camera;
 use events::Events;
 use mesh::Mesh;
-use physics::{Spring, Body, System};
+use physics::System;
 use scene::Scene;
 use shaders::LightProperties;
 use nalgebra::*;
+use physics::system::FRAME_PERIOD;
 use std::cell::RefCell;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -69,18 +70,18 @@ fn main() {
     // Create the physics environment.
     let mut world = System::new();
 
-    let weak_bunny_body_cell = world.add_body(Body::new());
-    if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
-        let mut bunny_body = bunny_body_cell.borrow_mut();
-        bunny_body.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
-    }
+    // let weak_bunny_body_cell = world.add_body(Body::new());
+    // if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
+    //     let mut bunny_body = bunny_body_cell.borrow_mut();
+    //     bunny_body.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
+    // }
 
-    world.add_field(Spring::new(Point3::origin(), 0.4));
+    // world.add_field(Spring::new(Point3::origin(), 0.4));
 
     // Misc. loop variables.
     let mut prev_time = Instant::now();
     let pi = f32::pi();
-    let frame_period = Duration::new(0, (physics::FRAME_PERIOD * 1.0e9) as u32);
+    let frame_period = Duration::new(0, (FRAME_PERIOD * 1.0e9) as u32);
 
     loop {
         events.pump(&display);
@@ -95,10 +96,10 @@ fn main() {
 
         // Update the world.
         world.update(ftime);
-        if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
-            let bunny_body = bunny_body_cell.borrow();
-            bunny_mesh.borrow_mut().position = bunny_body.position().to_point();
-        }
+        // if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
+        //     let bunny_body = bunny_body_cell.borrow();
+        //     bunny_mesh.borrow_mut().position = bunny_body.position().to_point();
+        // }
 
         // Update the camera.
         if events.left_click {

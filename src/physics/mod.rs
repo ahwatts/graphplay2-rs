@@ -1,10 +1,15 @@
+pub use self::body::Body;
 pub use self::constraint::Constraint;
 pub use self::integrator::{euler, rk4, Independent, Dependent, FirstOrderODE, Integrator};
-pub use self::system::{Body, System};
+pub use self::system::System;
 
+pub mod body;
 pub mod constraint;
 pub mod integrator;
 pub mod system;
+
+pub const FRAME_PERIOD: f32 = 1.0 / 60.0;
+pub const TIME_STEP: f32 = 1.0 / 300.0;
 
 // pub trait VectorField {
 //     fn at_point(&self, position: &Point3<f32>) -> Vector3<f32>;

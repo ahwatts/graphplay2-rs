@@ -13,7 +13,7 @@ use physics::System;
 use scene::Scene;
 use shaders::LightProperties;
 use nalgebra::*;
-use physics::system::FRAME_PERIOD;
+use physics::FRAME_PERIOD;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::thread;

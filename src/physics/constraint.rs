@@ -1,5 +1,5 @@
 use nalgebra::*;
-use physics::system::Body;
+use physics::body::Body;
 
 #[allow(dead_code)]
 pub struct Constraint {

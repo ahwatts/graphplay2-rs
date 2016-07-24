@@ -1,19 +1,21 @@
 use nalgebra::*;
 use physics::body::Body;
+use std::fmt::Debug;
+use std::rc::Rc;
 
-#[allow(dead_code)]
+#[derive(Clone, Debug)]
 pub struct Constraint {
-    body_a: Body,
-    body_b: Body,
-    calc: Box<ConstraintCalc>,
+    pub other: Body,
+    pub calc: Rc<ConstraintCalc>,
 }
 
-pub trait ConstraintCalc {
-    // Returns the force on body_a as a result of the
-    // constraint. Negate to get the force on body_b.
-    fn force(&self, constraint: &Constraint, pos_a: Point3<f32>, pos_b: Point3<f32>) -> Vector3<f32>;
+pub trait ConstraintCalc: Debug {
+    // Returns the force on this body as a result of the constraint
+    // from other.
+    fn force(&self, this_pos: &Point3<f32>, other_pos: &Point3<f32>) -> Vector3<f32>;
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Spring(pub f32);
 
 impl Spring {
@@ -23,8 +25,8 @@ impl Spring {
 }
 
 impl ConstraintCalc for Spring {
-    fn force(&self, _: &Constraint, pos_a: Point3<f32>, pos_b: Point3<f32>) -> Vector3<f32> {
-        let sep = pos_b - pos_a;
+    fn force(&self, this_pos: &Point3<f32>, other_pos: &Point3<f32>) -> Vector3<f32> {
+        let sep = *other_pos - *this_pos;
         sep * self.0
     }
 }

@@ -9,7 +9,7 @@ use glium::{glutin, DisplayBuild, Surface};
 use camera::Camera;
 use events::Events;
 use mesh::Mesh;
-use physics::System;
+use physics::{Body, Spring, System};
 use scene::Scene;
 use shaders::LightProperties;
 use nalgebra::*;
@@ -70,18 +70,21 @@ fn main() {
     // Create the physics environment.
     let mut world = System::new();
 
-    // let weak_bunny_body_cell = world.add_body(Body::new());
-    // if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
-    //     let mut bunny_body = bunny_body_cell.borrow_mut();
-    //     bunny_body.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
-    // }
-
-    // world.add_field(Spring::new(Point3::origin(), 0.4));
+    let mut bunny = Body::new();
+    let origin = Body::new();
+    bunny.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
+    bunny.add_constraint(Rc::new(Spring(0.4)), origin);
+    world.add_body(bunny.clone());
 
     // Misc. loop variables.
     let mut prev_time = Instant::now();
     let pi = f32::pi();
     let frame_period = Duration::new(0, (FRAME_PERIOD * 1.0e9) as u32);
+
+    let mut frame_count = 0;
+    let mut avg_update_secs = 0.0;
+    let mut avg_sleep_secs = 0.0;
+    let mut avg_real_sleep_secs = 0.0;
 
     loop {
         events.pump(&display);
@@ -95,11 +98,8 @@ fn main() {
         let ftime = secs + subsecs;
 
         // Update the world.
-        world.update(ftime);
-        // if let Some(bunny_body_cell) = Weak::upgrade(&weak_bunny_body_cell) {
-        //     let bunny_body = bunny_body_cell.borrow();
-        //     bunny_mesh.borrow_mut().position = bunny_body.position().to_point();
-        // }
+        let step_fraction = world.update(ftime);
+        bunny_mesh.borrow_mut().position = bunny.position(step_fraction).to_point();
 
         // Update the camera.
         if events.left_click {
@@ -120,11 +120,30 @@ fn main() {
 
         let update_time = Instant::now();
         let update_duration = update_time.duration_since(time);
-        // println!("Update took {:?}", update_duration);
+
+        frame_count += 1;
+        let update_secs = (update_duration.as_secs() as f32) +
+            (update_duration.subsec_nanos() as f32 / 1.0e9);
+        avg_update_secs = avg_update_secs + (update_secs - avg_update_secs)/(frame_count as f32);
+
         if update_duration < frame_period {
             let sleep_duration = frame_period - update_duration;
-            // println!("Sleeping for {:?}", sleep_duration);
+            let sleep_secs = (sleep_duration.as_secs() as f32) +
+                (sleep_duration.subsec_nanos() as f32 / 1.0e9);
+            avg_sleep_secs = avg_sleep_secs + (sleep_secs - avg_sleep_secs)/(frame_count as f32);
+
             thread::sleep(sleep_duration);
+
+            let real_sleep_time = Instant::now();
+            let real_sleep_duration = real_sleep_time - update_time;
+            let real_sleep_secs = (real_sleep_duration.as_secs() as f32) +
+                (real_sleep_duration.subsec_nanos() as f32 / 1.0e9);
+            avg_real_sleep_secs = avg_real_sleep_secs + (real_sleep_secs - avg_real_sleep_secs)/(frame_count as f32);
         }
     }
+
+    println!("frames = {}", frame_count);
+    println!("average update time: {} ms", avg_update_secs * 1e3);
+    println!("average sleep time: {} ms", avg_sleep_secs * 1e3);
+    println!("average actual sleep time: {} ms", avg_real_sleep_secs * 1e3);
 }

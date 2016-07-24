@@ -1,5 +1,5 @@
 pub use self::body::Body;
-pub use self::constraint::Constraint;
+pub use self::constraint::{Constraint, Spring};
 pub use self::integrator::{euler, rk4, Independent, Dependent, FirstOrderODE, Integrator};
 pub use self::system::System;
 

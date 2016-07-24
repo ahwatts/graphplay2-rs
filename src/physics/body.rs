@@ -1,4 +1,5 @@
 use nalgebra::*;
+use physics::constraint::{Constraint, ConstraintCalc};
 use physics::integrator::{euler, Dependent, Integrator};
 use std::cell::RefCell;
 use std::collections::VecDeque;
@@ -26,6 +27,7 @@ struct BodyInner {
     inv_mass: f32,
     states: VecDeque<BodyState>,
     integrator: Box<Integrator<Phase, f32>>,
+    constraints: Vec<Constraint>,
 }
 
 impl Body {
@@ -47,9 +49,17 @@ impl Body {
             inv_mass: 1.0,
             states: states,
             integrator: Box::new(euler),
+            constraints: Vec::new(),
         };
 
         Body(Rc::new(RefCell::new(inner)))
+    }
+
+    pub fn add_constraint(&mut self, calc: Rc<ConstraintCalc>, other: Body) {
+        self.0.borrow_mut().constraints.push(Constraint {
+            other: other.clone(),
+            calc: calc.clone(),
+        });
     }
 
     pub fn is_asleep(&self) -> bool { self.0.borrow().asleep }
@@ -105,15 +115,20 @@ impl Body {
     pub fn update(&mut self, time_step: f32) {
         let mut inner = self.0.borrow_mut();
 
-        let state = inner.states[FUTURE_INDEX].phase;
-        let force = inner.states[FUTURE_INDEX].force;
+        let phase = inner.states[FUTURE_INDEX].phase;
+        let base_force = inner.states[FUTURE_INDEX].force;
 
-        let new_phase = inner.integrator.step(state, 0.0, time_step, &|y: Phase, _t: f32| {
+        let new_phase = inner.integrator.step(phase, 0.0, time_step, &|y: Phase, _t: f32| {
+            let mut total_force = base_force;
+            for c in inner.constraints.iter() {
+                total_force += c.calc.force(y.position.as_point(), c.other.position(1.0).as_point());
+            }
+
             // This closure returns the *derivatives* of the position
             // and momentum, i.e, the velocity and the net force.
             Phase {
                 position: y.momentum * inner.inv_mass,
-                momentum: force,
+                momentum: total_force,
             }
         });
 

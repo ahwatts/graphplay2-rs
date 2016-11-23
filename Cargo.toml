@@ -5,6 +5,6 @@ authors = ["Andrew Watts <ahwatts@gmail.com>"]
 
 [dependencies]
 byteorder = "^0.5.1"
-glium = "^0.14.0"
-nalgebra = "^0.8.1"
+glium = "^0.15.0"
+nalgebra = "^0.10.0"
 num = "^0.1.32"

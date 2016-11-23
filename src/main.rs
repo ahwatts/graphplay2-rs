@@ -73,7 +73,7 @@ fn main() {
     let mut bunny = Body::new();
     let origin = Body::new();
     bunny.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
-    bunny.add_constraint(Rc::new(Spring(0.4)), origin);
+    bunny.add_constraint(Rc::new(Spring(5.0)), origin);
     world.add_body(bunny.clone());
 
     // Misc. loop variables.

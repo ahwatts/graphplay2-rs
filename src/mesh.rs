@@ -42,7 +42,7 @@ impl<V: Vertex, I: Index> SceneObject for Mesh<V, I> {
     }
 
     fn model_transform(&self) -> ModelTransformation {
-        let transform = Similarity3::new_with_rotation_matrix(
+        let transform = Similarity3::from_rotation_matrix(
             self.position.to_vector(),
             self.orientation,
             self.scale);

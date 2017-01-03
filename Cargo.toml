@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Andrew Watts <ahwatts@gmail.com>"]
 
 [dependencies]
-byteorder = "^0.5.1"
+byteorder = "^1.0.0"
 glium = "^0.15.0"
 nalgebra = "^0.10.0"
 num = "^0.1.32"

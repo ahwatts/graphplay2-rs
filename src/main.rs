@@ -5,16 +5,16 @@ use std::{
     time::{Duration, Instant},
 };
 
-use camera::Camera;
+use crate::camera::Camera;
 use glium::{
     glutin::{dpi::LogicalSize, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
     Display, Surface,
 };
-use mesh::Mesh;
+use crate::mesh::Mesh;
 use nalgebra::{Point3, Vector3};
-use physics::{Body, Spring, System, FRAME_PERIOD};
-use scene::Scene;
-use shaders::LightProperties;
+use crate::physics::{Body, Spring, System, FRAME_PERIOD};
+use crate::scene::Scene;
+use crate::shaders::LightProperties;
 
 extern crate byteorder;
 extern crate nalgebra;

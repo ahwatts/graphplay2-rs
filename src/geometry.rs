@@ -111,9 +111,9 @@ pub fn octohedron<F: Facade>(facade: &F) -> Geometry<PCNVertex, u16> {
     // each face).
     for face in faces {
         let (v1, v2, v3) = (face[0], face[1], face[2]);
-        let e1 = *v2.position_vec() - *v1.position_vec();
-        let e2 = *v3.position_vec() - *v1.position_vec();
-        let normal = cross(&e1, &e2).normalize();
+        let e1 = v2.position_vec() - v1.position_vec();
+        let e2 = v3.position_vec() - v1.position_vec();
+        let normal = e1.cross(&e2).normalize();
 
         let new_v1 = PCNVertex { position: v1.position, color: v1.color, normal: *normal.as_ref() };
         let new_v2 = PCNVertex { position: v2.position, color: v2.color, normal: *normal.as_ref() };

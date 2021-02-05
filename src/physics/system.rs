@@ -1,5 +1,5 @@
-use physics::body::Body;
-use physics::{FRAME_PERIOD, TIME_STEP};
+use crate::physics::body::Body;
+use crate::physics::{FRAME_PERIOD, TIME_STEP};
 
 pub struct System {
     bodies: Vec<Body>,

@@ -16,13 +16,13 @@ struct ShaderSource {
 }
 
 static UNLIT: ShaderSource = ShaderSource {
-    vertex: include_str!("unlit_vertex.glsl"),
-    fragment: include_str!("unlit_fragment.glsl"),
+    vertex: include_str!("shaders/unlit_vertex.glsl"),
+    fragment: include_str!("shaders/unlit_fragment.glsl"),
 };
 
 static LIT: ShaderSource = ShaderSource {
-    vertex: include_str!("lit_vertex.glsl"),
-    fragment: include_str!("lit_fragment.glsl"),
+    vertex: include_str!("shaders/lit_vertex.glsl"),
+    fragment: include_str!("shaders/lit_fragment.glsl"),
 };
 
 #[derive(Clone, Copy, Debug)]

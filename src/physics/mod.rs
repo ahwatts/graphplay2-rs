@@ -1,6 +1,6 @@
 pub use self::body::Body;
 pub use self::constraint::{Constraint, Spring};
-pub use self::integrator::{euler, rk4, Independent, Dependent, FirstOrderODE, Integrator};
+pub use self::integrator::{euler, rk4, Dependent, FirstOrderODE, Independent, Integrator};
 pub use self::system::System;
 
 pub mod body;

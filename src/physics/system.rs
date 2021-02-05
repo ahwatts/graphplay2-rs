@@ -1,5 +1,5 @@
-use physics::{FRAME_PERIOD, TIME_STEP};
 use physics::body::Body;
+use physics::{FRAME_PERIOD, TIME_STEP};
 
 pub struct System {
     bodies: Vec<Body>,
@@ -28,7 +28,10 @@ impl System {
         // a frame.
         if time_to_simulate > 10.0 * FRAME_PERIOD {
             time_to_simulate = FRAME_PERIOD;
-            println!("Took too long: {:?} fixing update time to {:?}", frame_time, time_to_simulate);
+            println!(
+                "Took too long: {:?} fixing update time to {:?}",
+                frame_time, time_to_simulate
+            );
         }
 
         // Run as many steps as we can such that we've run over the

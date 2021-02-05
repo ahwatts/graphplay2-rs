@@ -1,24 +1,30 @@
-use glium::backend::Facade;
-use glium::index::{Index, IndexBuffer, PrimitiveType};
-use glium::vertex::{Vertex, VertexBuffer};
-use ply::Document;
-use nalgebra::*;
 use std::iter;
+
+use glium::{
+    backend::Facade,
+    implement_vertex,
+    index::{Index, PrimitiveType},
+    IndexBuffer, Vertex, VertexBuffer,
+};
+use nalgebra::Vector3;
+use num::Bounded;
+
+use crate::ply::Document;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct PCNVertex {
     pub position: [f32; 3],
-    pub color:    [f32; 4],
-    pub normal:   [f32; 3],
+    pub color: [f32; 4],
+    pub normal: [f32; 3],
 }
 
 impl PCNVertex {
-    pub fn position_vec(&self) -> &Vector3<f32> {
-        From::from(&self.position)
+    pub fn position_vec(&self) -> Vector3<f32> {
+        Vector3::from_row_slice(&self.position)
     }
 
-    pub fn normal_vec(&self) -> &Vector3<f32> {
-        From::from(&self.normal)
+    pub fn normal_vec(&self) -> Vector3<f32> {
+        Vector3::from_row_slice(&self.normal)
     }
 }
 
@@ -32,8 +38,16 @@ pub struct Geometry<V: Vertex, I: Index> {
 }
 
 impl<V: Vertex, I: Index> Geometry<V, I> {
-    pub fn new<F, IV, II>(facade: &F, draw_type: PrimitiveType, into_vertices: IV, into_indices: II) -> Geometry<V, I>
-        where F: Facade, IV: Into<Vec<V>>, II: Into<Vec<I>>
+    pub fn new<F, IV, II>(
+        facade: &F,
+        draw_type: PrimitiveType,
+        into_vertices: IV,
+        into_indices: II,
+    ) -> Geometry<V, I>
+    where
+        F: Facade,
+        IV: Into<Vec<V>>,
+        II: Into<Vec<I>>,
     {
         let vertices = into_vertices.into();
         let indices = into_indices.into();
@@ -140,8 +154,14 @@ pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u3
     let doc = Document::from_file(filename).unwrap();
 
     // Copy the vertex attributes.
-    let vert_elem = doc.elements().iter().find(|e| e.name() == "vertex").unwrap();
-    let mut verts: Vec<PCNVertex> = iter::repeat(Default::default()).take(vert_elem.count() as usize).collect();
+    let vert_elem = doc
+        .elements()
+        .iter()
+        .find(|e| e.name() == "vertex")
+        .unwrap();
+    let mut verts: Vec<PCNVertex> = iter::repeat(Default::default())
+        .take(vert_elem.count() as usize)
+        .collect();
     for p in vert_elem.properties() {
         match p.name() {
             "x" => for (v, p) in verts.iter_mut().zip(p.data().float_scalar().unwrap().iter()) { v.position[0] = *p as f32 },
@@ -162,7 +182,11 @@ pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u3
     let faces = doc.elements().iter().find(|e| e.name() == "face").unwrap();
     let mut elems = vec![];
     for i in 0..(faces.count() as usize) {
-        let p = faces.properties().iter().find(|p| p.name() == "vertex_indices").unwrap();
+        let p = faces
+            .properties()
+            .iter()
+            .find(|p| p.name() == "vertex_indices")
+            .unwrap();
         elems.extend(p.data().int_list().unwrap()[i].iter().map(|j| *j as u32));
     }
 
@@ -170,8 +194,8 @@ pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u3
     let mut bb_min = Vector3::max_value();
     let mut bb_max = Vector3::min_value();
     for v in verts.iter() {
-        bb_min = bb_min.inf(v.position_vec());
-        bb_max = bb_max.sup(v.position_vec());
+        bb_min = bb_min.inf(&v.position_vec());
+        bb_max = bb_max.sup(&v.position_vec());
     }
 
     // Scale everything so that it's in the range -1 to 1 and centered.
@@ -179,7 +203,7 @@ pub fn load_ply<F: Facade>(facade: &F, filename: &str) -> Geometry<PCNVertex, u3
     let new_bb_max = bb_max - bcenter;
     let max_dim = new_bb_max.iter().fold(f32::min_value(), |m, &v| m.max(v));
     for v in verts.iter_mut() {
-        v.position = *((*v.position_vec() - bcenter) / max_dim).as_ref();
+        v.position = *((v.position_vec() - bcenter) / max_dim).as_ref();
     }
 
     // Set the colors, assuming all vertices are opaque.

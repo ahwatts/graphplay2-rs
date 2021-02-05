@@ -1,8 +1,10 @@
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader, Read},
+    str::FromStr,
+};
+
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
-use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
-use std::io;
-use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Format {
@@ -16,9 +18,9 @@ impl FromStr for Format {
 
     fn from_str(string: &str) -> io::Result<Format> {
         match string {
-            "ascii"                => Ok(Format::Ascii),
+            "ascii" => Ok(Format::Ascii),
             "binary_little_endian" => Ok(Format::BinaryLittleEndian),
-            "binary_big_endian"    => Ok(Format::BinaryBigEndian),
+            "binary_big_endian" => Ok(Format::BinaryBigEndian),
             _ => Err(other_io_error(&format!("Unknown ply format: {:?}", string))),
         }
     }
@@ -26,10 +28,14 @@ impl FromStr for Format {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DataType {
-    Int8, Uint8,
-    Int16, Uint16,
-    Int32, Uint32,
-    Float32, Float64,
+    Int8,
+    Uint8,
+    Int16,
+    Uint16,
+    Int32,
+    Uint32,
+    Float32,
+    Float64,
 }
 
 impl FromStr for DataType {
@@ -37,13 +43,13 @@ impl FromStr for DataType {
 
     fn from_str(string: &str) -> io::Result<DataType> {
         match string {
-            "char"   | "int8"    => Ok(DataType::Int8),
-            "uchar"  | "uint8"   => Ok(DataType::Uint8),
-            "short"  | "int16"   => Ok(DataType::Int16),
-            "ushort" | "uint16"  => Ok(DataType::Uint16),
-            "int"    | "int32"   => Ok(DataType::Int32),
-            "uint"   | "uint32"  => Ok(DataType::Uint32),
-            "float"  | "float32" => Ok(DataType::Float32),
+            "char" | "int8" => Ok(DataType::Int8),
+            "uchar" | "uint8" => Ok(DataType::Uint8),
+            "short" | "int16" => Ok(DataType::Int16),
+            "ushort" | "uint16" => Ok(DataType::Uint16),
+            "int" | "int32" => Ok(DataType::Int32),
+            "uint" | "uint32" => Ok(DataType::Uint32),
+            "float" | "float32" => Ok(DataType::Float32),
             "double" | "float64" => Ok(DataType::Float64),
             _ => Err(other_io_error(&format!("Unknown data type: {:?}", string))),
         }
@@ -60,7 +66,7 @@ impl DataType {
 
     pub fn byte_size(&self) -> i32 {
         match *self {
-            DataType::Int8  | DataType::Uint8  => 1,
+            DataType::Int8 | DataType::Uint8 => 1,
             DataType::Int16 | DataType::Uint16 => 2,
             DataType::Int32 | DataType::Uint32 => 4,
             DataType::Float32 => 4,
@@ -76,17 +82,20 @@ impl DataType {
             (Int8, _) => reader.read_i8().map(|i| i as i64),
             (Uint8, _) => reader.read_u8().map(|i| i as i64),
 
-            (Int16,  BinaryLittleEndian) => reader.read_i16::<LittleEndian>().map(|i| i as i64),
-            (Int16,  BinaryBigEndian)    => reader.read_i16::<BigEndian>()   .map(|i| i as i64),
+            (Int16, BinaryLittleEndian) => reader.read_i16::<LittleEndian>().map(|i| i as i64),
+            (Int16, BinaryBigEndian) => reader.read_i16::<BigEndian>().map(|i| i as i64),
             (Uint16, BinaryLittleEndian) => reader.read_u16::<LittleEndian>().map(|i| i as i64),
-            (Uint16, BinaryBigEndian)    => reader.read_u16::<BigEndian>()   .map(|i| i as i64),
+            (Uint16, BinaryBigEndian) => reader.read_u16::<BigEndian>().map(|i| i as i64),
 
-            (Int32,  BinaryLittleEndian) => reader.read_i32::<LittleEndian>().map(|i| i as i64),
-            (Int32,  BinaryBigEndian)    => reader.read_i32::<BigEndian>()   .map(|i| i as i64),
+            (Int32, BinaryLittleEndian) => reader.read_i32::<LittleEndian>().map(|i| i as i64),
+            (Int32, BinaryBigEndian) => reader.read_i32::<BigEndian>().map(|i| i as i64),
             (Uint32, BinaryLittleEndian) => reader.read_u32::<LittleEndian>().map(|i| i as i64),
-            (Uint32, BinaryBigEndian)    => reader.read_u32::<BigEndian>()   .map(|i| i as i64),
-                
-            _ => Err(io::Error::new(io::ErrorKind::Other, format!("Cannot decode int for float: self = {:?}", self))),
+            (Uint32, BinaryBigEndian) => reader.read_u32::<BigEndian>().map(|i| i as i64),
+
+            _ => Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Cannot decode int for float: self = {:?}", self),
+            )),
         }
     }
 
@@ -96,10 +105,13 @@ impl DataType {
 
         match (*self, *format) {
             (Float32, BinaryLittleEndian) => reader.read_f32::<LittleEndian>().map(|i| i as f64),
-            (Float32, BinaryBigEndian)    => reader.read_f32::<BigEndian>()   .map(|i| i as f64),
+            (Float32, BinaryBigEndian) => reader.read_f32::<BigEndian>().map(|i| i as f64),
             (Float64, BinaryLittleEndian) => reader.read_f64::<LittleEndian>(),
-            (Float64, BinaryBigEndian)    => reader.read_f64::<BigEndian>(),
-            _ => Err(io::Error::new(io::ErrorKind::Other, format!("Cannot decode float for int: self = {:?}", self))),
+            (Float64, BinaryBigEndian) => reader.read_f64::<BigEndian>(),
+            _ => Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Cannot decode float for int: self = {:?}", self),
+            )),
         }
     }
 }
@@ -113,7 +125,7 @@ pub struct Document {
 
 impl Document {
     pub fn from_file(filename: &str) -> io::Result<Document> {
-        let file = try!(File::open(filename));
+        let file = File::open(filename)?;
         Self::from_reader(file)
     }
 
@@ -126,34 +138,50 @@ impl Document {
         };
 
         let mut magic = String::new();
-        try!(file.read_line(&mut magic));
+        file.read_line(&mut magic)?;
 
         if &magic != "ply\n" && &magic != "ply\r\n" {
-            return Err(other_io_error(&format!("File does not appear to be a ply file: {:?}", magic)));
+            return Err(other_io_error(&format!(
+                "File does not appear to be a ply file: {:?}",
+                magic
+            )));
         }
 
         for line_result in (&mut file).lines() {
-            let line = try!(line_result);
+            let line = line_result?;
             let tokens: Vec<&str> = (&line).split(" ").collect();
 
-            match *try!(tokens.get(0).ok_or(other_io_error(&format!("No tokens on line?! (line = {:?})", line)))) {
-                "format" => { rv.format = try!(parse_format(&tokens)); },
-                "comment" => { rv.comments.push(try!(parse_comment(&tokens))); },
-                "element" => { rv.elements.push(try!(parse_element(&tokens))); },
+            match *tokens.get(0).ok_or(other_io_error(&format!(
+                "No tokens on line?! (line = {:?})",
+                line
+            )))? {
+                "format" => {
+                    rv.format = parse_format(&tokens)?;
+                }
+                "comment" => {
+                    rv.comments.push(parse_comment(&tokens)?);
+                }
+                "element" => {
+                    rv.elements.push(parse_element(&tokens)?);
+                }
                 "property" => {
                     let elements = &mut rv.elements;
-                    let element = try!(elements.last_mut().ok_or(other_io_error(("Tried to add a property but there's no current element"))));
-                    element.add_property(try!(parse_property(&tokens)));
-                },
+                    let element = elements.last_mut().ok_or(other_io_error(
+                        "Tried to add a property but there's no current element",
+                    ))?;
+                    element.add_property(parse_property(&tokens)?);
+                }
                 "end_header" => break,
-                _ => {},
+                _ => {}
             }
         }
 
         for elt in rv.elements.iter_mut() {
             match rv.format {
-                Format::Ascii => try!(read_ascii_element(elt, &mut file)),
-                f @ Format::BinaryLittleEndian | f @ Format::BinaryBigEndian => try!(read_binary_element(elt, f, &mut file)),
+                Format::Ascii => read_ascii_element(elt, &mut file)?,
+                f @ Format::BinaryLittleEndian | f @ Format::BinaryBigEndian => {
+                    read_binary_element(elt, f, &mut file)?
+                }
             }
         }
 
@@ -206,23 +234,23 @@ impl PropertyValue {
     pub fn is_list(&self) -> bool {
         match *self {
             PropertyValue::IntScalar(..) | PropertyValue::FloatScalar(..) => false,
-            PropertyValue::IntList(..)   | PropertyValue::FloatList(..)   => true,
+            PropertyValue::IntList(..) | PropertyValue::FloatList(..) => true,
         }
     }
 
     pub fn is_int(&self) -> bool {
         match *self {
-            PropertyValue::IntScalar(..)   | PropertyValue::IntList(..)   => true,
+            PropertyValue::IntScalar(..) | PropertyValue::IntList(..) => true,
             PropertyValue::FloatScalar(..) | PropertyValue::FloatList(..) => false,
         }
     }
 
     pub fn is_same_variant(&self, other: &PropertyValue) -> bool {
         match (self, other) {
-            (&PropertyValue::IntScalar(..),   &PropertyValue::IntScalar(..))   => true,
-            (&PropertyValue::IntList(..),     &PropertyValue::IntList(..))     => true,
+            (&PropertyValue::IntScalar(..), &PropertyValue::IntScalar(..)) => true,
+            (&PropertyValue::IntList(..), &PropertyValue::IntList(..)) => true,
             (&PropertyValue::FloatScalar(..), &PropertyValue::FloatScalar(..)) => true,
-            (&PropertyValue::FloatList(..),   &PropertyValue::FloatList(..))   => true,
+            (&PropertyValue::FloatList(..), &PropertyValue::FloatList(..)) => true,
             _ => false,
         }
     }
@@ -258,17 +286,23 @@ impl PropertyValue {
     fn push_ascii_scalar_value(&mut self, value_str: &str) -> Result<(), String> {
         match *self {
             PropertyValue::IntScalar(ref mut ilist) => {
-                let ival = try!(
-                    i64::from_str_radix(value_str, 10)
-                        .map_err(|e| format!("Could not parse ply scalar int property value from {:?}: {:?}", value_str, e)));
+                let ival = i64::from_str_radix(value_str, 10).map_err(|e| {
+                    format!(
+                        "Could not parse ply scalar int property value from {:?}: {:?}",
+                        value_str, e
+                    )
+                })?;
                 ilist.push(ival);
-            },
+            }
             PropertyValue::FloatScalar(ref mut flist) => {
-                let fval = try!(
-                    f64::from_str(value_str)
-                        .map_err(|e| format!("Could not parse ply scalar float property value from {:?}: {:?}", value_str, e)));
+                let fval = f64::from_str(value_str).map_err(|e| {
+                    format!(
+                        "Could not parse ply scalar float property value from {:?}: {:?}",
+                        value_str, e
+                    )
+                })?;
                 flist.push(fval);
-            },
+            }
             _ => return Err("Cannot push scalar value to list property value".to_string()),
         }
 
@@ -280,17 +314,17 @@ impl PropertyValue {
             PropertyValue::IntList(ref mut illist) => {
                 let mut list = PropertyValue::IntScalar(vec![]);
                 for v in values.iter() {
-                    try!(list.push_ascii_scalar_value(v));
+                    list.push_ascii_scalar_value(v)?;
                 }
                 illist.push(list.int_scalar().unwrap().clone());
-            },
+            }
             PropertyValue::FloatList(ref mut fllist) => {
                 let mut list = PropertyValue::FloatScalar(vec![]);
                 for v in values.iter() {
-                    try!(list.push_ascii_scalar_value(v));
+                    list.push_ascii_scalar_value(v)?;
                 }
                 fllist.push(list.float_scalar().unwrap().clone());
-            },
+            }
             _ => return Err("Cannot push list value to scalar property value".to_string()),
         }
 
@@ -333,7 +367,11 @@ impl Property {
 }
 
 fn parse_format(toks: &Vec<&str>) -> io::Result<Format> {
-    Format::from_str(*try!(toks.get(1).ok_or(other_io_error("Not enough tokens for ply format"))))
+    Format::from_str(
+        *toks
+            .get(1)
+            .ok_or(other_io_error("Not enough tokens for ply format"))?,
+    )
 }
 
 fn parse_comment(toks: &Vec<&str>) -> io::Result<String> {
@@ -347,76 +385,108 @@ fn parse_comment(toks: &Vec<&str>) -> io::Result<String> {
 }
 
 fn parse_element(toks: &Vec<&str>) -> io::Result<Element> {
-    let name = *try!(toks.get(1).ok_or(other_io_error("Not enough tokens for ply element name")));
-    let count_str = *try!(toks.get(2).ok_or(other_io_error("Not enough tokens for ply element count")));
-    let count = try!(i32::from_str_radix(count_str, 10).map_err(|e| other_io_error(&format!("Could not parse ply element count from {:?}: {:?}", count_str, e))));
+    let name = *toks
+        .get(1)
+        .ok_or(other_io_error("Not enough tokens for ply element name"))?;
+    let count_str = *toks
+        .get(2)
+        .ok_or(other_io_error("Not enough tokens for ply element count"))?;
+    let count = i32::from_str_radix(count_str, 10).map_err(|e| {
+        other_io_error(&format!(
+            "Could not parse ply element count from {:?}: {:?}",
+            count_str, e
+        ))
+    })?;
 
     Ok(Element {
         name: name.to_string(),
-        count: count,
+        count,
         properties: vec![],
     })
 }
 
 fn parse_property(toks: &Vec<&str>) -> io::Result<Property> {
-    let prop_type = *try!(toks.get(1).ok_or(other_io_error("Not enough tokens for ply property type")));
+    let prop_type = *toks
+        .get(1)
+        .ok_or(other_io_error("Not enough tokens for ply property type"))?;
 
     if prop_type == "list" {
-        let count_type_str = *try!(toks.get(2).ok_or(other_io_error("Not enough tokens for ply list property count type")));
-        let value_type_str = *try!(toks.get(3).ok_or(other_io_error("Not enough tokens for ply list property value type")));
-        let name = *try!(toks.get(4).ok_or(other_io_error("Not enough tokens for ply list property name")));
+        let count_type_str = *toks.get(2).ok_or(other_io_error(
+            "Not enough tokens for ply list property count type",
+        ))?;
+        let value_type_str = *toks.get(3).ok_or(other_io_error(
+            "Not enough tokens for ply list property value type",
+        ))?;
+        let name = *toks.get(4).ok_or(other_io_error(
+            "Not enough tokens for ply list property name",
+        ))?;
 
-        let count_type = try!(DataType::from_str(count_type_str));
-        let value_type = try!(DataType::from_str(value_type_str));
+        let count_type = DataType::from_str(count_type_str)?;
+        let value_type = DataType::from_str(value_type_str)?;
 
         Ok(Property {
             name: name.to_string(),
-            value_type: value_type,
+            value_type,
             count_type: Some(count_type),
             data: match value_type.is_int() {
                 true => PropertyValue::IntList(vec![]),
                 false => PropertyValue::FloatList(vec![]),
-            }
+            },
         })
     } else {
-        let name = *try!(toks.get(2).ok_or(other_io_error("Not enough tokens for ply property name")));
-        let value_type = try!(DataType::from_str(prop_type));
+        let name = *toks
+            .get(2)
+            .ok_or(other_io_error("Not enough tokens for ply property name"))?;
+        let value_type = DataType::from_str(prop_type)?;
 
         Ok(Property {
             name: name.to_string(),
-            value_type: value_type,
+            value_type,
             count_type: None,
             data: match value_type.is_int() {
                 true => PropertyValue::IntScalar(vec![]),
                 false => PropertyValue::FloatScalar(vec![]),
-            }
+            },
         })
     }
 }
 
 fn read_ascii_element<T: BufRead>(element: &mut Element, file: &mut T) -> io::Result<()> {
     for line_result in file.lines().take(element.count as usize) {
-        let line = try!(line_result);
+        let line = line_result?;
         let mut toks = line.split(" ");
 
         for property in element.properties.iter_mut() {
             if property.is_list() {
-                let count_str = try!(toks.next().ok_or(other_io_error("Not enough tokens for ply list property count")));
-                let count = try!{
-                    usize::from_str_radix(count_str, 10).map_err(|e| {
-                        other_io_error(&format!("Could not get ply property count from {:?}: {:?}", count_str, e))
-                    })
-                };
+                let count_str = toks.next().ok_or(other_io_error(
+                    "Not enough tokens for ply list property count",
+                ))?;
+                let count = usize::from_str_radix(count_str, 10).map_err(|e| {
+                    other_io_error(&format!(
+                        "Could not get ply property count from {:?}: {:?}",
+                        count_str, e
+                    ))
+                })?;
 
                 let mut value_toks = vec![];
                 for _ in 0..count {
-                    value_toks.push(try!(toks.next().ok_or(other_io_error("Not enough tokens for ply list property value"))));
+                    value_toks.push(toks.next().ok_or(other_io_error(
+                        "Not enough tokens for ply list property value",
+                    ))?);
                 }
 
-                try!(property.data.push_ascii_list_value(&value_toks).map_err(|s| other_io_error(&s)))
+                property
+                    .data
+                    .push_ascii_list_value(&value_toks)
+                    .map_err(|s| other_io_error(&s))?
             } else {
-                let value_str = try!(toks.next().ok_or(other_io_error("Not enough tokens for ply scalar property value")));
-                try!(property.data.push_ascii_scalar_value(value_str).map_err(|s| other_io_error(&s)));
+                let value_str = toks.next().ok_or(other_io_error(
+                    "Not enough tokens for ply scalar property value",
+                ))?;
+                property
+                    .data
+                    .push_ascii_scalar_value(value_str)
+                    .map_err(|s| other_io_error(&s))?;
             }
         }
     }
@@ -424,14 +494,18 @@ fn read_ascii_element<T: BufRead>(element: &mut Element, file: &mut T) -> io::Re
     Ok(())
 }
 
-fn read_binary_element<T: BufRead>(element: &mut Element, format: Format, file: &mut T) -> io::Result<()> {
+fn read_binary_element<T: BufRead>(
+    element: &mut Element,
+    format: Format,
+    file: &mut T,
+) -> io::Result<()> {
     use self::PropertyValue::*;
 
     for _ in 0..element.count {
         for property in element.properties.iter_mut() {
             if property.is_list() {
                 let count_type = property.count_type().unwrap();
-                let count = try!(count_type.read_int(file, &format));
+                let count = count_type.read_int(file, &format)?;
 
                 let value_type = property.value_type();
                 let mut values = if value_type.is_int() {
@@ -443,32 +517,36 @@ fn read_binary_element<T: BufRead>(element: &mut Element, format: Format, file: 
                 for _ in 0..count {
                     match values {
                         IntScalar(ref mut ivec) => {
-                            let ival = try!(value_type.read_int(file, &format));
+                            let ival = value_type.read_int(file, &format)?;
                             ivec.push(ival);
-                        },
+                        }
                         FloatScalar(ref mut fvec) => {
-                            let fval = try!(value_type.read_float(file, &format));
+                            let fval = value_type.read_float(file, &format)?;
                             fvec.push(fval);
-                        },
+                        }
                         _ => return Err(other_io_error("Error parsing list value")),
                     }
                 }
 
                 match (&mut property.data, values) {
-                    (&mut IntList(ref mut ilists), IntScalar(ref ivals)) => ilists.push(ivals.clone()),
-                    (&mut FloatList(ref mut flists), FloatScalar(ref fvals)) => flists.push(fvals.clone()),
+                    (&mut IntList(ref mut ilists), IntScalar(ref ivals)) => {
+                        ilists.push(ivals.clone())
+                    }
+                    (&mut FloatList(ref mut flists), FloatScalar(ref fvals)) => {
+                        flists.push(fvals.clone())
+                    }
                     _ => return Err(other_io_error("Error parsing list value")),
                 }
             } else {
                 let value_type = property.value_type();
                 if value_type.is_int() {
-                    let value = try!(value_type.read_int(file, &format));
+                    let value = value_type.read_int(file, &format)?;
                     match &mut property.data {
                         &mut IntScalar(ref mut ivals) => ivals.push(value),
                         _ => return Err(other_io_error("Error parsing scalar value")),
                     }
                 } else {
-                    let value = try!(value_type.read_float(file, &format));
+                    let value = value_type.read_float(file, &format)?;
                     match &mut property.data {
                         &mut FloatScalar(ref mut fvals) => fvals.push(value),
                         _ => return Err(other_io_error("Error parsing float value")),
@@ -487,13 +565,11 @@ fn other_io_error(msg: &str) -> io::Error {
 
 #[cfg(test)]
 mod tests {
-    use super::{Document, DataType, Format, PropertyValue};
-    use std::error::Error;
+    use super::{DataType, Document, Format, PropertyValue};
 
     fn error_description(doc_str: &str) -> String {
         Document::from_reader(doc_str.as_bytes())
             .unwrap_err()
-            .description()
             .to_string()
     }
 
@@ -566,7 +642,7 @@ end_header
         let vprops = elements[0].properties();
         assert_eq!(3, vprops.len());
 
-        for (prop, name) in vprops.iter().zip([ "x", "y", "z" ].iter()) {
+        for (prop, name) in vprops.iter().zip(["x", "y", "z"].iter()) {
             assert_eq!(*name, prop.name());
             assert!(!prop.is_list());
             assert!(!prop.is_int());
@@ -591,25 +667,36 @@ end_header
         assert_eq!(3, vprops.len());
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 1.0, -1.0, 0.0, 0.0, 0.0, 0.0 ]),
-            vprops[0].data());
+            &PropertyValue::FloatScalar(vec![1.0, -1.0, 0.0, 0.0, 0.0, 0.0]),
+            vprops[0].data()
+        );
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 0.0, 0.0, 0.0, 0.0, -1.0, 1.0 ]),
-            vprops[1].data());
+            &PropertyValue::FloatScalar(vec![0.0, 0.0, 0.0, 0.0, -1.0, 1.0]),
+            vprops[1].data()
+        );
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 0.0, 0.0, 1.0, -1.0, 0.0, 0.0 ]),
-            vprops[2].data());
+            &PropertyValue::FloatScalar(vec![0.0, 0.0, 1.0, -1.0, 0.0, 0.0]),
+            vprops[2].data()
+        );
 
         let fprops = elements[1].properties();
         assert_eq!(1, fprops.len());
 
         assert_eq!(
             &PropertyValue::IntList(vec![
-                vec![ 4, 0, 2 ], vec![ 4, 3, 0 ], vec![ 4, 1, 3 ], vec![ 4, 2, 1 ],
-                vec![ 5, 2, 0 ], vec![ 5, 0, 3 ], vec![ 5, 3, 1 ], vec![ 5, 1, 2 ]]),
-            fprops[0].data());
+                vec![4, 0, 2],
+                vec![4, 3, 0],
+                vec![4, 1, 3],
+                vec![4, 2, 1],
+                vec![5, 2, 0],
+                vec![5, 0, 3],
+                vec![5, 3, 1],
+                vec![5, 1, 2]
+            ]),
+            fprops[0].data()
+        );
     }
 
     #[test]
@@ -623,54 +710,70 @@ end_header
         assert_eq!(3, vprops.len());
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 1.0, -1.0, 0.0, 0.0, 0.0, 0.0 ]),
-            vprops[0].data());
+            &PropertyValue::FloatScalar(vec![1.0, -1.0, 0.0, 0.0, 0.0, 0.0]),
+            vprops[0].data()
+        );
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 0.0, 0.0, 0.0, 0.0, -1.0, 1.0 ]),
-            vprops[1].data());
+            &PropertyValue::FloatScalar(vec![0.0, 0.0, 0.0, 0.0, -1.0, 1.0]),
+            vprops[1].data()
+        );
 
         assert_eq!(
-            &PropertyValue::FloatScalar(vec![ 0.0, 0.0, 1.0, -1.0, 0.0, 0.0 ]),
-            vprops[2].data());
+            &PropertyValue::FloatScalar(vec![0.0, 0.0, 1.0, -1.0, 0.0, 0.0]),
+            vprops[2].data()
+        );
 
         let fprops = elements[1].properties();
         assert_eq!(1, fprops.len());
 
         assert_eq!(
             &PropertyValue::IntList(vec![
-                vec![ 4, 0, 2 ], vec![ 4, 3, 0 ], vec![ 4, 1, 3 ], vec![ 4, 2, 1 ],
-                vec![ 5, 2, 0 ], vec![ 5, 0, 3 ], vec![ 5, 3, 1 ], vec![ 5, 1, 2 ]]),
-            fprops[0].data());
+                vec![4, 0, 2],
+                vec![4, 3, 0],
+                vec![4, 1, 3],
+                vec![4, 2, 1],
+                vec![5, 2, 0],
+                vec![5, 0, 3],
+                vec![5, 3, 1],
+                vec![5, 1, 2]
+            ]),
+            fprops[0].data()
+        );
     }
 
     #[test]
     fn bad_magic() {
         assert_eq!(
             "File does not appear to be a ply file: \"ply 2\\n\"",
-            error_description("ply 2\nformat ascii 1.0\n"));
+            error_description("ply 2\nformat ascii 1.0\n")
+        );
     }
 
     #[test]
     fn bad_format() {
         assert_eq!(
             "Not enough tokens for ply format",
-            error_description("ply\nformat\n"));
+            error_description("ply\nformat\n")
+        );
 
         assert_eq!(
             "Unknown ply format: \"blahdeblah\"",
-            error_description("ply\nformat blahdeblah 1.0\n"));
+            error_description("ply\nformat blahdeblah 1.0\n")
+        );
     }
 
     #[test]
     fn bad_element() {
         assert_eq!(
             "Not enough tokens for ply element name",
-            error_description("ply\nelement\n"));
+            error_description("ply\nelement\n")
+        );
 
         assert_eq!(
             "Not enough tokens for ply element count",
-            error_description("ply\nelement vertex\n"));
+            error_description("ply\nelement vertex\n")
+        );
 
         assert_eq!(
             "Could not parse ply element count from \"green\": ParseIntError { kind: InvalidDigit }",
@@ -681,41 +784,50 @@ end_header
     fn bad_property() {
         assert_eq!(
             "Tried to add a property but there's no current element",
-            error_description("ply\nproperty float32 x\n"));
+            error_description("ply\nproperty float32 x\n")
+        );
 
         // Scalar properties.
         assert_eq!(
             "Not enough tokens for ply property type",
-            error_description("ply\nelement vertex 12\nproperty\n"));
+            error_description("ply\nelement vertex 12\nproperty\n")
+        );
 
         assert_eq!(
             "Not enough tokens for ply property name",
-            error_description("ply\nelement vertex 12\nproperty float32\n"));
+            error_description("ply\nelement vertex 12\nproperty float32\n")
+        );
 
         assert_eq!(
             "Unknown data type: \"puppy\"",
-            error_description("ply\nelement vertex 12\nproperty puppy x\n"));
+            error_description("ply\nelement vertex 12\nproperty puppy x\n")
+        );
 
         // List properties.
         assert_eq!(
             "Not enough tokens for ply list property count type",
-            error_description("ply\nelement vertex 12\nproperty list\n"));
+            error_description("ply\nelement vertex 12\nproperty list\n")
+        );
 
         assert_eq!(
             "Not enough tokens for ply list property value type",
-            error_description("ply\nelement vertex 12\nproperty list uint8\n"));
+            error_description("ply\nelement vertex 12\nproperty list uint8\n")
+        );
 
         assert_eq!(
             "Not enough tokens for ply list property name",
-            error_description("ply\nelement vertex 12\nproperty list uint8 int32\n"));
+            error_description("ply\nelement vertex 12\nproperty list uint8 int32\n")
+        );
 
         assert_eq!(
             "Unknown data type: \"puppy\"",
-            error_description("ply\nelement face 12\nproperty list puppy int32 vertex_indices"));
+            error_description("ply\nelement face 12\nproperty list puppy int32 vertex_indices")
+        );
 
         assert_eq!(
             "Unknown data type: \"puppy\"",
-            error_description("ply\nelement face 12\nproperty list uint8 puppy vertex_indices"));
+            error_description("ply\nelement face 12\nproperty list uint8 puppy vertex_indices")
+        );
     }
 
     #[test]

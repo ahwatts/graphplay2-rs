@@ -1,3 +1,21 @@
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    thread,
+    time::{Duration, Instant},
+};
+
+use camera::Camera;
+use glium::{
+    glutin::{dpi::LogicalSize, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
+    Display, Surface,
+};
+use mesh::Mesh;
+use nalgebra::{Point3, Vector3};
+use physics::{Body, Spring, System, FRAME_PERIOD};
+use scene::Scene;
+use shaders::LightProperties;
+
 extern crate byteorder;
 extern crate nalgebra;
 extern crate num;
@@ -5,22 +23,8 @@ extern crate num;
 #[macro_use]
 extern crate glium;
 
-use glium::{glutin, DisplayBuild, Surface};
-use camera::Camera;
-use events::Events;
-use mesh::Mesh;
-use physics::{Body, Spring, System};
-use scene::Scene;
-use shaders::LightProperties;
-use nalgebra::*;
-use physics::FRAME_PERIOD;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::thread;
-use std::time::{Duration, Instant};
-
 pub mod camera;
-pub mod events;
+// pub mod events;
 pub mod geometry;
 pub mod mesh;
 pub mod physics;
@@ -30,18 +34,19 @@ pub mod shaders;
 
 fn main() {
     let (width, height) = (1024, 768);
-    let mut events: Events = Default::default();
 
-    // Create the window / OpenGL context.
-    let display = glutin::WindowBuilder::new()
-        .with_dimensions(width, height)
-        .with_title("graphplay2")
+    let event_loop = EventLoop::new();
+    let window_builder = WindowBuilder::new()
+        .with_inner_size(LogicalSize::new(width, height))
+        .with_title("graphplay2");
+    let context_builder = ContextBuilder::new()
         .with_depth_buffer(24)
-        .with_vsync()
-        .build_glium()
-        .unwrap();
-    let (window_width, window_height) = display.get_window().unwrap()
-        .get_inner_size_pixels().unwrap();
+        .with_vsync(true)
+        .with_double_buffer(Some(true));
+    let display =
+        Display::new(window_builder, context_builder, &event_loop).expect("Error creating display");
+
+    let (window_width, window_height) = display.gl_window().window().inner_size().into();
 
     // Create the shader programs.
     let unlit = Rc::new(shaders::unlit(&display));
@@ -50,11 +55,18 @@ fn main() {
     // Create the scene graph.
     let mut scene = Scene::new(
         &display,
-        Camera::new(Point3  { x: 0.0, y: 0.0, z: 70.0 },
-                    Point3  { x: 0.0, y: 0.0, z:  0.0 },
-                    Vector3 { x: 0.0, y: 1.0, z:  0.0 }),
-        window_width, window_height);
-    scene.set_light(0, LightProperties::new(true, [ 0.0, 10.0, 10.0 ], [ 1.0, 1.0, 1.0, 1.0 ], 10.0));
+        Camera::new(
+            Point3::new(0.0, 0.0, 70.0),
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 1.0, 0.0),
+        ),
+        window_width,
+        window_height,
+    );
+    scene.set_light(
+        0,
+        LightProperties::new(true, [0.0, 10.0, 10.0], [1.0, 1.0, 1.0, 1.0], 10.0),
+    );
 
     // Bunny.
     let bunny = Rc::new(geometry::load_ply(&display, "geometry/stanford_bunny.ply"));
@@ -72,13 +84,12 @@ fn main() {
 
     let mut bunny = Body::new();
     let origin = Body::new();
-    bunny.set_position(Vector3 { x: 10.0, y: 0.0, z: 0.0 });
+    bunny.set_position(Vector3::new(10.0, 0.0, 0.0));
     bunny.add_constraint(Rc::new(Spring(5.0)), origin);
     world.add_body(bunny.clone());
 
     // Misc. loop variables.
     let mut prev_time = Instant::now();
-    let pi = f32::pi();
     let frame_period = Duration::new(0, (FRAME_PERIOD * 1.0e9) as u32);
 
     let mut frame_count = 0;
@@ -87,7 +98,7 @@ fn main() {
     let mut avg_real_sleep_secs = 0.0;
 
     loop {
-        events.pump(&display);
+        // events.pump(&display);
 
         // Get the elapsed time.
         let time = Instant::now();
@@ -99,51 +110,55 @@ fn main() {
 
         // Update the world.
         let step_fraction = world.update(ftime);
-        bunny_mesh.borrow_mut().position = bunny.position(step_fraction).to_point();
+        bunny_mesh.borrow_mut().position = bunny.position(step_fraction).into();
 
         // Update the camera.
-        if events.left_click {
-            let theta = -2.0 * pi * events.mouse_delta.x / (scene.viewport().width as f32);
-            let phi   = -1.0 * pi * events.mouse_delta.y / (scene.viewport().height as f32);
-            scene.camera.rotate(theta, phi);
-        }
+        // if events.left_click {
+        //     let theta = -2.0 * PI * events.mouse_delta.x / (scene.viewport().width as f32);
+        //     let phi   = -1.0 * PI * events.mouse_delta.y / (scene.viewport().height as f32);
+        //     scene.camera.rotate(theta, phi);
+        // }
 
         // Render.
         let mut target = display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+        target.clear(None, Some((0.0, 0.0, 0.0, 1.0)), true, Some(1.0), None);
         scene.render(&mut target);
         target.finish().unwrap();
 
-        if events.quit {
-            break;
-        }
+        // if events.quit {
+        //     break;
+        // }
 
         let update_time = Instant::now();
         let update_duration = update_time.duration_since(time);
 
         frame_count += 1;
-        let update_secs = (update_duration.as_secs() as f32) +
-            (update_duration.subsec_nanos() as f32 / 1.0e9);
-        avg_update_secs = avg_update_secs + (update_secs - avg_update_secs)/(frame_count as f32);
+        let update_secs =
+            (update_duration.as_secs() as f32) + (update_duration.subsec_nanos() as f32 / 1.0e9);
+        avg_update_secs = avg_update_secs + (update_secs - avg_update_secs) / (frame_count as f32);
 
         if update_duration < frame_period {
             let sleep_duration = frame_period - update_duration;
-            let sleep_secs = (sleep_duration.as_secs() as f32) +
-                (sleep_duration.subsec_nanos() as f32 / 1.0e9);
-            avg_sleep_secs = avg_sleep_secs + (sleep_secs - avg_sleep_secs)/(frame_count as f32);
+            let sleep_secs =
+                (sleep_duration.as_secs() as f32) + (sleep_duration.subsec_nanos() as f32 / 1.0e9);
+            avg_sleep_secs = avg_sleep_secs + (sleep_secs - avg_sleep_secs) / (frame_count as f32);
 
             thread::sleep(sleep_duration);
 
             let real_sleep_time = Instant::now();
             let real_sleep_duration = real_sleep_time - update_time;
-            let real_sleep_secs = (real_sleep_duration.as_secs() as f32) +
-                (real_sleep_duration.subsec_nanos() as f32 / 1.0e9);
-            avg_real_sleep_secs = avg_real_sleep_secs + (real_sleep_secs - avg_real_sleep_secs)/(frame_count as f32);
+            let real_sleep_secs = (real_sleep_duration.as_secs() as f32)
+                + (real_sleep_duration.subsec_nanos() as f32 / 1.0e9);
+            avg_real_sleep_secs = avg_real_sleep_secs
+                + (real_sleep_secs - avg_real_sleep_secs) / (frame_count as f32);
         }
     }
 
-    println!("frames = {}", frame_count);
-    println!("average update time: {} ms", avg_update_secs * 1e3);
-    println!("average sleep time: {} ms", avg_sleep_secs * 1e3);
-    println!("average actual sleep time: {} ms", avg_real_sleep_secs * 1e3);
+    // println!("frames = {}", frame_count);
+    // println!("average update time: {} ms", avg_update_secs * 1e3);
+    // println!("average sleep time: {} ms", avg_sleep_secs * 1e3);
+    // println!(
+    //     "average actual sleep time: {} ms",
+    //     avg_real_sleep_secs * 1e3
+    // );
 }

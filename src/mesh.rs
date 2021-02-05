@@ -1,11 +1,14 @@
-use geometry::Geometry;
-use glium::index::{Index, IndicesSource};
-use glium::program::Program;
-use glium::vertex::{IntoVerticesSource, Vertex, VerticesSource};
-use nalgebra::*;
-use scene::SceneObject;
-use shaders::ModelTransformation;
 use std::rc::Rc;
+
+use glium::{
+    index::{Index, IndicesSource},
+    vertex::VerticesSource,
+    Program, Vertex,
+};
+use nalgebra::{Point3, Rotation3};
+use num::One;
+
+use crate::{geometry::Geometry, scene::SceneObject, shaders::ModelTransformation};
 
 pub struct Mesh<V: Vertex, I: Index> {
     geometry: Rc<Geometry<V, I>>,
@@ -19,18 +22,18 @@ pub struct Mesh<V: Vertex, I: Index> {
 impl<V: Vertex, I: Index> Mesh<V, I> {
     pub fn new(geometry: Rc<Geometry<V, I>>, program: Rc<Program>) -> Mesh<V, I> {
         Mesh {
-            geometry: geometry,
-            program: program,
-            position: origin(),
+            geometry,
+            program,
+            position: Point3::origin(),
             scale: 1.0,
-            orientation: one(),
+            orientation: Rotation3::one(),
         }
     }
 }
 
 impl<V: Vertex, I: Index> SceneObject for Mesh<V, I> {
     fn vertices(&self) -> VerticesSource {
-        self.geometry.vertex_buffer().into_vertices_source()
+        self.geometry.vertex_buffer().into()
     }
 
     fn indices(&self) -> IndicesSource {
@@ -42,20 +45,20 @@ impl<V: Vertex, I: Index> SceneObject for Mesh<V, I> {
     }
 
     fn model_transform(&self) -> ModelTransformation {
-        let transform = Similarity3::from_rotation_matrix(
-            self.position.to_vector(),
-            self.orientation,
-            self.scale);
-        let model = transform.to_homogeneous();
+        // let transform = Similarity3::from_parts(
+        //     Translation::from(self.position.into()),
+        //     self.orientation,
+        //     self.scale);
+        // let model = transform.to_homogeneous();
 
-        // Since we're only doing uniform scaling, the normal matrix
-        // (the inverse transpose of the upper-left 3x3 of the model
-        // matrix) is equal to the upper-left 3x3 of the model matrix.
-        let model_normal = FromHomogeneous::from(&model);
+        // // Since we're only doing uniform scaling, the normal matrix
+        // // (the inverse transpose of the upper-left 3x3 of the model
+        // // matrix) is equal to the upper-left 3x3 of the model matrix.
+        // let model_normal = FromHomogeneous::from(&model);
 
         ModelTransformation {
-            model: model,
-            model_normal: model_normal,
+            model: One::one(),
+            model_normal: One::one(),
         }
     }
 }
